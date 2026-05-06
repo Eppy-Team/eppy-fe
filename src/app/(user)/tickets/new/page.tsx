@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import AuthGuard from "@/components/AuthGuard";
@@ -13,6 +13,7 @@ export default function NewTicketPage() {
     file: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const ticketId = "#00234";
 
   const handleChange = (
@@ -26,6 +27,25 @@ export default function NewTicketPage() {
     setSubmitted(true);
   };
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && (file.type === "image/png" || file.type === "image/jpeg")) {
+      setForm((prev) => ({ ...prev, file: file.name }));
+    }
+  }, []);
+
   return (
     <AuthGuard>
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#DDEAF6" }}>
@@ -33,7 +53,6 @@ export default function NewTicketPage() {
 
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           {!submitted ? (
-            /* Form Tiket */
             <div
               className="bg-white w-full max-w-xl px-12 py-10"
               style={{ border: "1px solid #B8D0E8", borderRadius: "4px" }}
@@ -109,10 +128,20 @@ export default function NewTicketPage() {
                   />
                   <label
                     htmlFor="file-upload"
-                    className="flex flex-col items-center justify-center w-full py-4 cursor-pointer hover:bg-epson-light transition-colors"
-                    style={{ border: "2px dashed #B8D0E8", borderRadius: "4px" }}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className="flex flex-col items-center justify-center w-full py-4 cursor-pointer transition-all duration-200"
+                    style={{
+                      border: isDragging ? "2px dashed #003087" : "2px dashed #B8D0E8",
+                      borderRadius: "4px",
+                      backgroundColor: isDragging ? "#DDEAF6" : "white",
+                      transform: isDragging ? "scale(1.01)" : "scale(1)",
+                      boxShadow: isDragging ? "0 0 0 4px rgba(0,48,135,0.08)" : "none",
+                    }}
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#003087" strokeWidth="1.5" className="mb-1">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                      stroke={isDragging ? "#003087" : "#003087"} strokeWidth="1.5" className="mb-1">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                       <line x1="12" y1="18" x2="12" y2="12" />
@@ -121,6 +150,10 @@ export default function NewTicketPage() {
                     {form.file ? (
                       <span className="text-sm font-medium" style={{ color: "#003087" }}>
                         ✅ {form.file}
+                      </span>
+                    ) : isDragging ? (
+                      <span className="text-sm font-medium" style={{ color: "#003087" }}>
+                        Lepaskan file di sini...
                       </span>
                     ) : (
                       <>
@@ -146,7 +179,6 @@ export default function NewTicketPage() {
               </form>
             </div>
           ) : (
-            /* Tiket Berhasil */
             <div
               className="bg-white w-full max-w-lg px-12 py-12 text-center"
               style={{ border: "1px solid #B8D0E8", borderRadius: "4px" }}

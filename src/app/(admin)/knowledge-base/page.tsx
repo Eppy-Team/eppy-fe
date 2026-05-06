@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 
@@ -54,7 +54,6 @@ const AdminSidebar = ({ active, router }: { active: string; router: ReturnType<t
   ];
 
   return (
-    // Di AdminSidebar knowledge-base
     <aside
       className="w-64 bg-white flex flex-col shrink-0"
       style={{
@@ -95,6 +94,7 @@ export default function KnowledgeBasePage() {
   const [editItem, setEditItem] = useState<KBItem | null>(null);
   const [form, setForm] = useState({ pertanyaan: "", jawaban: "" });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const openTambah = () => {
     setEditItem(null);
@@ -124,6 +124,25 @@ export default function KnowledgeBasePage() {
     setOpenId(null);
   };
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === "application/pdf") {
+      setForm((prev) => ({ ...prev, jawaban: file.name }));
+    }
+  }, []);
+
   return (
     <AuthGuard>
       <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#DDEAF6" }}>
@@ -132,10 +151,8 @@ export default function KnowledgeBasePage() {
         <div className="flex" style={{ minHeight: "calc(100vh - 57px)" }}>
           <AdminSidebar active="/knowledge-base" router={router} />
 
-          {/* Konten */}
           <main className="flex-1 p-8 overflow-y-auto">
             {!showForm ? (
-              /* List KB */
               <div className="w-full pr-8">
                 <div className="flex flex-col gap-3">
                   {data.map((item) => {
@@ -145,7 +162,6 @@ export default function KnowledgeBasePage() {
                         key={item.id}
                         style={{ border: "1px solid #D4E6F7", borderRadius: "8px", overflow: "hidden", backgroundColor: "white" }}
                       >
-                        {/* Header */}
                         <button
                           onClick={() => setOpenId(isOpen ? null : item.id)}
                           className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
@@ -161,7 +177,6 @@ export default function KnowledgeBasePage() {
                           </svg>
                         </button>
 
-                        {/* Konten + Tombol Aksi */}
                         {isOpen && (
                           <div style={{ borderTop: "1px solid #D4E6F7" }}>
                             <div className="px-5 py-4 text-sm text-gray-700 whitespace-pre-line">
@@ -199,7 +214,6 @@ export default function KnowledgeBasePage() {
                   })}
                 </div>
 
-                {/* Tombol + Floating */}
                 <button
                   onClick={openTambah}
                   className="fixed bottom-8 right-8 w-14 h-14 rounded-full text-white text-3xl flex items-center justify-center shadow-lg hover:opacity-90 transition-opacity"
@@ -209,7 +223,6 @@ export default function KnowledgeBasePage() {
                 </button>
               </div>
             ) : (
-              /* Form Tambah/Edit */
               <div className="max-w-2xl mx-auto">
                 <div className="bg-white rounded-lg p-10" style={{ border: "1px solid #D4E6F7" }}>
                   <h2 className="text-3xl font-bold mb-1" style={{ color: "#003087" }}>
@@ -247,10 +260,16 @@ export default function KnowledgeBasePage() {
                       />
                       <label
                         htmlFor="pdf-upload"
-                        className="flex flex-col items-center justify-center w-full py-8 cursor-pointer hover:bg-epson-light transition-colors"
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        className="flex flex-col items-center justify-center w-full py-8 cursor-pointer transition-all duration-200"
                         style={{
-                          border: "2px dashed #B8D0E8",
+                          border: isDragging ? "2px dashed #003087" : "2px dashed #B8D0E8",
                           borderRadius: "4px",
+                          backgroundColor: isDragging ? "#DDEAF6" : "white",
+                          transform: isDragging ? "scale(1.01)" : "scale(1)",
+                          boxShadow: isDragging ? "0 0 0 4px rgba(0,48,135,0.08)" : "none",
                         }}
                       >
                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#003087" strokeWidth="1.5" className="mb-2">
@@ -262,6 +281,10 @@ export default function KnowledgeBasePage() {
                         {form.jawaban ? (
                           <span className="text-sm font-medium" style={{ color: "#003087" }}>
                             ✅ {form.jawaban}
+                          </span>
+                        ) : isDragging ? (
+                          <span className="text-sm font-medium" style={{ color: "#003087" }}>
+                            Lepaskan file di sini...
                           </span>
                         ) : (
                           <span className="text-sm font-medium" style={{ color: "#003087" }}>
