@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
+import { createConversation, sendChat } from "@/lib/api";
 
 type MessageType =
   | { type: "user"; content: string }
@@ -32,8 +33,14 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [escalationAnswered, setEscalationAnswered] = useState(false);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = (text: string) => {
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
 
     setMessages((prev) => [...prev, { type: "user", content: text }]);
@@ -42,18 +49,31 @@ export default function ChatPage() {
     setFeedbackGiven(false);
     setEscalationAnswered(false);
 
-    setTimeout(() => {
+    try {
+      let conversationId = activeConversationId;
+
+      if (!conversationId) {
+        const res = await createConversation(text.slice(0, 50));
+        conversationId = res.data?.id;
+        setActiveConversationId(conversationId);
+      }
+
+      const res = await sendChat(conversationId!, text);
+      const botContent = res.data?.assistantMessage?.content || "Maaf, tidak ada respons.";
+
       setMessages((prev) => [
         ...prev,
-        {
-          type: "bot",
-          content:
-            "Untuk menghubungkan printer Epson ke jaringan Wi-Fi, ikuti langkah-langkah berikut:\n1. Nyalakan printer Epson.\n   Pastikan printer dalam keadaan hidup dan tidak sedang mencetak.\n2. Tekan tombol Wi-Fi pada printer.\n   Tahan hingga lampu indikator Wi-Fi mulai berkedip.\n3. Gunakan WPS (jika router mendukung):\n   • Tekan tombol WPS pada router dalam waktu 2 menit.\n   • Tunggu hingga lampu Wi-Fi pada printer berhenti berkedip dan menyala stabil.\n4. Jika tanpa WPS (manual setup):\n   • Hubungkan laptop/PC ke jaringan Wi-Fi yang sama.\n   • Jalankan Epson Printer Setup Utility di komputer.\n   • Pilih Wireless Connection → Set up printer for the first time.\n5. Konfirmasi koneksi.\n   Setelah berhasil, coba cetak Network Status Sheet.",
-        },
+        { type: "bot", content: botContent },
         { type: "feedback" },
       ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        { type: "bot", content: "Maaf, terjadi kesalahan. Silakan coba lagi." },
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleFeedback = (helpful: boolean) => {
@@ -66,8 +86,7 @@ export default function ChatPage() {
         { type: "user", content: "❌ Tidak, belum membantu" },
         {
           type: "bot",
-          content:
-            "Mohon maaf, saya belum dapat menemukan solusi yang sesuai. Apakah Anda ingin membuat tiket baru",
+          content: "Mohon maaf, saya belum dapat menemukan solusi yang sesuai. Apakah Anda ingin membuat tiket baru",
         },
         { type: "escalation" },
       ]);
@@ -105,7 +124,21 @@ export default function ChatPage() {
 
         <div className="flex flex-1 overflow-hidden p-4 gap-3">
           {/* Sidebar Kiri */}
-          <ChatSidebar />
+          <ChatSidebar
+            activeConversationId={activeConversationId}
+            onSelectConversation={(id, msgs) => {
+              setActiveConversationId(id);
+              setMessages(msgs);
+              setFeedbackGiven(false);
+              setEscalationAnswered(false);
+            }}
+            onNewChat={() => {
+              setActiveConversationId(null);
+              setMessages([]);
+              setFeedbackGiven(false);
+              setEscalationAnswered(false);
+            }}
+          />
 
           {/* Area Chat Tengah */}
           <main
@@ -114,7 +147,6 @@ export default function ChatPage() {
           >
             <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-4">
               {messages.length === 0 ? (
-                /* Tampilan Awal */
                 <div className="flex flex-col gap-5 mt-16">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -139,7 +171,6 @@ export default function ChatPage() {
                   </div>
                 </div>
               ) : (
-                /* Bubble Chat */
                 <div className="flex flex-col gap-4 w-full">
                   {messages.map((msg, i) => {
                     if (msg.type === "user") {
@@ -154,7 +185,6 @@ export default function ChatPage() {
                         </div>
                       );
                     }
-
                     if (msg.type === "bot") {
                       return (
                         <div key={i} className="flex justify-start">
@@ -167,7 +197,6 @@ export default function ChatPage() {
                         </div>
                       );
                     }
-
                     if (msg.type === "feedback") {
                       return (
                         <div key={i} className="flex flex-col gap-2">
@@ -193,7 +222,6 @@ export default function ChatPage() {
                         </div>
                       );
                     }
-
                     if (msg.type === "escalation") {
                       return (
                         <div key={i} className="flex flex-col gap-2">
@@ -221,7 +249,6 @@ export default function ChatPage() {
                         </div>
                       );
                     }
-
                     if (msg.type === "escalation-confirmed") {
                       return (
                         <div key={i} className="flex justify-start">
@@ -234,11 +261,9 @@ export default function ChatPage() {
                         </div>
                       );
                     }
-
                     return null;
                   })}
 
-                  {/* Typing Indicator */}
                   {isTyping && (
                     <div className="flex justify-start">
                       <div
@@ -257,6 +282,7 @@ export default function ChatPage() {
                       </div>
                     </div>
                   )}
+                  <div ref={bottomRef} />
                 </div>
               )}
             </div>
@@ -277,7 +303,8 @@ export default function ChatPage() {
                 />
                 <button
                   onClick={() => sendMessage(input)}
-                  className="flex items-center justify-center hover:opacity-80 transition-opacity"
+                  disabled={isTyping}
+                  className="flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50"
                   style={{ width: "32px", height: "32px", backgroundColor: "#003087", borderRadius: "4px" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">

@@ -1,14 +1,27 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { getAllConversations, getDetailConversation } from "@/lib/api";
 
-const riwayat = [
-  "Bagaimana cara menghubungkan",
-  "Bagaimana cara menghubungkan",
-  "Bagaimana cara menghubungkan",
-  "Bagaimana cara menghubungkan",
-  "Bagaimana cara menghubungkan",
-];
+type MessageType =
+  | { type: "user"; content: string }
+  | { type: "bot"; content: string }
+  | { type: "feedback" }
+  | { type: "escalation" }
+  | { type: "escalation-confirmed" };
+
+type Conversation = {
+  id: string;
+  title: string;
+  createdAt: string;
+};
+
+type Props = {
+  activeConversationId?: string | null;
+  onSelectConversation?: (id: string, msgs: MessageType[]) => void;
+  onNewChat?: () => void;
+};
 
 const menuItems = [
   {
@@ -22,7 +35,7 @@ const menuItems = [
   },
   {
     label: "Cari Pesan",
-    path: "search",
+    path: "/search",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -42,9 +55,35 @@ const menuItems = [
   },
 ];
 
-export default function ChatSidebar() {
+export default function ChatSidebar({ activeConversationId = null, onSelectConversation, onNewChat }: Props) {
   const router = useRouter();
   const pathname = usePathname();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const res = await getAllConversations();
+        setConversations(res.data || []);
+      } catch {
+        // abaikan error
+      }
+    };
+    fetchConversations();
+  }, [activeConversationId]);
+
+  const handleSelectConversation = async (conv: Conversation) => {
+    try {
+      const res = await getDetailConversation(conv.id);
+      const msgs: MessageType[] = (res.data || []).map((m: { role: string; content: string }) => ({
+        type: m.role === "USER" ? "user" : "bot",
+        content: m.content,
+      }));
+      onSelectConversation?.(conv.id, msgs);
+    } catch {
+      onSelectConversation?.(conv.id, []);
+    }
+  };
 
   return (
     <aside
@@ -54,12 +93,6 @@ export default function ChatSidebar() {
       {/* Menu Utama */}
       <div className="p-4 flex flex-col gap-1">
         {menuItems.map((item) => {
-          const isActive = pathname === item.path && item.label === "Pesan Eppy Baru (AI)"
-            ? true
-            : pathname === item.path && item.label !== "Pesan Eppy Baru (AI)"
-              ? false
-              : pathname === item.path;
-
           const active =
             (item.label === "Pesan Eppy Baru (AI)" && pathname === "/chat") ||
             (item.label === "Cari Pesan" && pathname === "/search") ||
@@ -68,7 +101,13 @@ export default function ChatSidebar() {
           return (
             <button
               key={item.label}
-              onClick={() => router.push(item.path)}
+              onClick={() => {
+                if (item.label === "Pesan Eppy Baru (AI)") {
+                  if (onNewChat) onNewChat(); else router.push('/chat');
+                } else {
+                  router.push(item.path);
+                }
+              }}
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-left"
               style={{
                 backgroundColor: active ? "#003087" : "transparent",
@@ -94,15 +133,24 @@ export default function ChatSidebar() {
           </svg>
           Pesan Anda
         </div>
-        {riwayat.map((item, i) => (
-          <button
-            key={i}
-            onClick={() => router.push("/chat")}
-            className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-epson-light transition-colors w-full text-left truncate"
-          >
-            {item}
-          </button>
-        ))}
+        {conversations.length === 0 ? (
+          <p className="text-xs text-gray-400 px-3">Belum ada percakapan</p>
+        ) : (
+          conversations.map((conv) => (
+            <button
+              key={conv.id}
+              onClick={() => handleSelectConversation(conv)}
+              className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-epson-light transition-colors w-full text-left truncate"
+              style={{
+                backgroundColor: activeConversationId === conv.id ? "#DDEAF6" : "transparent",
+                fontWeight: activeConversationId === conv.id ? 600 : 400,
+                color: activeConversationId === conv.id ? "#003087" : "#6b7280",
+              }}
+            >
+              {conv.title || "Percakapan"}
+            </button>
+          ))
+        )}
       </div>
     </aside>
   );

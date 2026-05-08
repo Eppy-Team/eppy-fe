@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import AuthGuard from "@/components/AuthGuard";
+import { createTicket } from "@/lib/api";
 
 export default function NewTicketPage() {
   const router = useRouter();
@@ -13,8 +14,9 @@ export default function NewTicketPage() {
     file: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [ticketId, setTicketId] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const ticketId = "#00234";
 
   const handleChange = (
     e: React.ChangeEvent<HTMLSelectElement | HTMLTextAreaElement>
@@ -22,9 +24,22 @@ export default function NewTicketPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      const res = await createTicket(
+        form.produk,
+        form.deskripsi,
+        form.produk
+      );
+      setTicketId(res.data?.id?.slice(0, 8).toUpperCase() || "XXXXXX");
+      setSubmitted(true);
+    } catch {
+      alert("Gagal membuat tiket. Silakan coba lagi.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -81,10 +96,10 @@ export default function NewTicketPage() {
                       style={{ border: "1px solid #B8D0E8", borderRadius: "4px" }}
                     >
                       <option value="">Produk</option>
-                      <option value="printer">Printer</option>
-                      <option value="scanner">Pemindai</option>
-                      <option value="projector">Proyektor</option>
-                      <option value="other">Lainnya</option>
+                      <option value="Printer">Printer</option>
+                      <option value="Scanner">Pemindai</option>
+                      <option value="Projector">Proyektor</option>
+                      <option value="General">Lainnya</option>
                     </select>
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2">
@@ -141,7 +156,7 @@ export default function NewTicketPage() {
                     }}
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                      stroke={isDragging ? "#003087" : "#003087"} strokeWidth="1.5" className="mb-1">
+                      stroke="#003087" strokeWidth="1.5" className="mb-1">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                       <line x1="12" y1="18" x2="12" y2="12" />
@@ -170,10 +185,11 @@ export default function NewTicketPage() {
                 <div className="flex justify-center mt-2">
                   <button
                     type="submit"
-                    className="px-16 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                    disabled={submitting}
+                    className="px-16 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     style={{ backgroundColor: "#0070C0", borderRadius: "4px" }}
                   >
-                    Kirim
+                    {submitting ? "Mengirim..." : "Kirim"}
                   </button>
                 </div>
               </form>
@@ -191,7 +207,7 @@ export default function NewTicketPage() {
               </p>
               <p className="text-sm text-gray-600 mb-2">Nomor tiket kamu adalah :</p>
               <p className="text-3xl font-bold mb-6" style={{ color: "#003087" }}>
-                {ticketId}
+                #{ticketId}
               </p>
               <p className="text-sm text-gray-600 mb-6">
                 ❤️ Tim Customer Service Epson akan menghubungi kamu melalui email dalam waktu maksimal{" "}

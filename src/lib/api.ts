@@ -73,17 +73,11 @@ export const getDetailConversation = async (conversationId: string) => {
   return data;
 };
 
-export const sendChat = async (conversationId: string, content: string, image?: File) => {
-  const formData = new FormData();
-  formData.append("content", content);
-  if (image) formData.append("image", image);
-
+export const sendChat = async (conversationId: string, content: string) => {
   const res = await fetch(`${BASE_URL}/conversations/${conversationId}/messages`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
-    },
-    body: formData,
+    headers: authHeaders(),
+    body: JSON.stringify({ content }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal mengirim pesan");
@@ -137,5 +131,80 @@ export const deleteKnowledge = async (knowledgeId: string) => {
   if (res.status === 204) return { status: "success" };
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal menghapus knowledge");
+  return data;
+};
+
+// ==================== TICKET (USER) ====================
+export const createTicket = async (title: string, description: string, category: string, conversationId?: string, messageId?: string) => {
+  const res = await fetch(`${BASE_URL}/tickets/`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ title, description, category, conversationId, messageId }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal membuat tiket");
+  return data;
+};
+
+export const getAllTickets = async (page = 1, limit = 10) => {
+  const res = await fetch(`${BASE_URL}/tickets/?page=${page}&limit=${limit}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengambil tiket");
+  return data;
+};
+
+export const getDetailTicket = async (ticketId: string) => {
+  const res = await fetch(`${BASE_URL}/tickets/${ticketId}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengambil detail tiket");
+  return data;
+};
+
+// ==================== TICKET (ADMIN) ====================
+export const getAllTicketsAdmin = async (page = 1, limit = 10) => {
+  const res = await fetch(`${BASE_URL}/tickets/admin/all?page=${page}&limit=${limit}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengambil tiket admin");
+  return data;
+};
+
+export const getDetailTicketAdmin = async (ticketId: string) => {
+  const res = await fetch(`${BASE_URL}/tickets/admin/${ticketId}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengambil detail tiket admin");
+  return data;
+};
+
+export const updateTicketStatus = async (ticketId: string, status: string) => {
+  const res = await fetch(`${BASE_URL}/tickets/admin/${ticketId}/status`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal update status tiket");
+  return data;
+};
+
+export const respondTicket = async (ticketId: string, adminResponse: string) => {
+  const res = await fetch(`${BASE_URL}/tickets/admin/${ticketId}/respond`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ adminResponse }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengirim respons tiket");
   return data;
 };
