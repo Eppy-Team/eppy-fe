@@ -4,6 +4,8 @@ import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { getAllKnowledges, createKnowledge, deleteKnowledge } from "@/lib/api";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 
 type KBItem = {
   id: string;
@@ -75,6 +77,7 @@ export default function KnowledgeBasePage() {
   const [isDragging, setIsDragging] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,7 +102,7 @@ export default function KnowledgeBasePage() {
       setShowForm(false);
       setForm({ title: "", category: "", file: null });
     } catch {
-      alert("Gagal menyimpan data. Silakan coba lagi.");
+      showToast("Gagal menyimpan data. Silakan coba lagi.", "error");
     } finally {
       setSaving(false);
     }
@@ -113,7 +116,7 @@ export default function KnowledgeBasePage() {
       setDeleteId(null);
       setOpenId(null);
     } catch {
-      alert("Gagal menghapus data. Silakan coba lagi.");
+      showToast("Gagal menghapus data. Silakan coba lagi.", "error");
     } finally {
       setDeleting(false);
     }
@@ -289,6 +292,7 @@ export default function KnowledgeBasePage() {
           </div>
         )}
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </AuthGuard>
   );
 }

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { getAllTicketsAdmin, updateTicketStatus, respondTicket } from "@/lib/api";
+import Toast from "@/components/ui/Toast";
+import { useToast } from "@/hooks/useToast";
 
 const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
   <nav className="w-full bg-white border-b px-8 py-3 flex items-center justify-between sticky top-0 z-50"
@@ -78,6 +80,7 @@ export default function AdminTicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [response, setResponse] = useState("");
   const [saving, setSaving] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   const fetchTickets = async (p = 1) => {
     setLoading(true);
@@ -99,8 +102,9 @@ export default function AdminTicketsPage() {
       await updateTicketStatus(ticketId, status);
       setTickets((prev) => prev.map((t) => t.id === ticketId ? { ...t, status } : t));
       if (selectedTicket?.id === ticketId) setSelectedTicket((prev) => prev ? { ...prev, status } : prev);
+      showToast("Status tiket berhasil diupdate.", "success");
     } catch {
-      alert("Gagal update status.");
+      showToast("Gagal update status tiket.", "error");
     }
   };
 
@@ -112,8 +116,9 @@ export default function AdminTicketsPage() {
       setSelectedTicket((prev) => prev ? { ...prev, adminResponse: response, status: "RESOLVED" } : prev);
       setTickets((prev) => prev.map((t) => t.id === selectedTicket.id ? { ...t, adminResponse: response, status: "RESOLVED" } : t));
       setResponse("");
+      showToast("Respons berhasil dikirim.", "success");
     } catch {
-      alert("Gagal mengirim respons.");
+      showToast("Gagal mengirim respons.", "error");
     } finally {
       setSaving(false);
     }
@@ -281,6 +286,7 @@ export default function AdminTicketsPage() {
           </main>
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
     </AuthGuard>
   );
 }
