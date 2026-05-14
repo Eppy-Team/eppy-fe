@@ -1,4 +1,4 @@
-const BASE_URL = "https://api-eppy.my.id";
+const BASE_URL = "https://api-eppy.my.id/api/v1";
 
 // ==================== TOKEN ====================
 export const setToken = (token: string) => {
