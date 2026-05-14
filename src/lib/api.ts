@@ -1,4 +1,4 @@
-const BASE_URL = "https://api-eppy.my.id/api/v1";
+const BASE_URL = "http://54.251.135.49:3000/api/v1";
 
 // ==================== TOKEN ====================
 export const setToken = (token: string) => {
@@ -135,11 +135,11 @@ export const deleteKnowledge = async (knowledgeId: string) => {
 };
 
 // ==================== TICKET (USER) ====================
-export const createTicket = async (title: string, description: string, category: string, conversationId?: string, messageId?: string) => {
+export const createTicket = async (title: string, description: string, conversationId: string, messageId: string) => {
   const res = await fetch(`${BASE_URL}/tickets/`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ title, description, category, conversationId, messageId }),
+    body: JSON.stringify({ title, description, conversationId, messageId }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal membuat tiket");

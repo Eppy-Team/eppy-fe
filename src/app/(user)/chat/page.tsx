@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
-import { createConversation, sendChat } from "@/lib/api";
+import { createConversation, sendChat, createTicket } from "@/lib/api";
 
 type MessageType =
   | { type: "user"; content: string }
-  | { type: "bot"; content: string }
+  | { type: "bot"; content: string; messageId?: string }
   | { type: "feedback" }
   | { type: "escalation" }
   | { type: "escalation-confirmed" };
@@ -34,6 +34,8 @@ export default function ChatPage() {
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [escalationAnswered, setEscalationAnswered] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [lastMessageId, setLastMessageId] = useState<string | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState<string>("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function ChatPage() {
     setIsTyping(true);
     setFeedbackGiven(false);
     setEscalationAnswered(false);
+    setLastUserMessage(text);
 
     try {
       let conversationId = activeConversationId;
@@ -60,10 +63,13 @@ export default function ChatPage() {
 
       const res = await sendChat(conversationId!, text);
       const botContent = res.data?.assistantMessage?.content || "Maaf, tidak ada respons.";
+      const messageId = res.data?.assistantMessage?.id || null;
+
+      setLastMessageId(messageId);
 
       setMessages((prev) => [
         ...prev,
-        { type: "bot", content: botContent },
+        { type: "bot", content: botContent, messageId },
         { type: "feedback" },
       ]);
     } catch {
@@ -86,7 +92,7 @@ export default function ChatPage() {
         { type: "user", content: "❌ Tidak, belum membantu" },
         {
           type: "bot",
-          content: "Mohon maaf, saya belum dapat menemukan solusi yang sesuai. Apakah Anda ingin membuat tiket baru",
+          content: "Mohon maaf, saya belum dapat menemukan solusi yang sesuai. Apakah Anda ingin membuat tiket baru?",
         },
         { type: "escalation" },
       ]);
@@ -98,7 +104,7 @@ export default function ChatPage() {
     }
   };
 
-  const handleEscalation = (confirm: boolean) => {
+  const handleEscalation = async (confirm: boolean) => {
     if (escalationAnswered) return;
     setEscalationAnswered(true);
 
@@ -108,7 +114,18 @@ export default function ChatPage() {
         { type: "user", content: "✅ Ya, Buatkan Saya Tiket Baru" },
         { type: "escalation-confirmed" },
       ]);
-      setTimeout(() => router.push("/tickets/new"), 1000);
+
+      try {
+        await createTicket(
+          lastUserMessage.slice(0, 100),
+          lastUserMessage,
+          activeConversationId!,
+          lastMessageId!
+        );
+        setTimeout(() => router.push("/tickets"), 1000);
+      } catch {
+        setTimeout(() => router.push("/tickets"), 1000);
+      }
     } else {
       setMessages((prev) => [
         ...prev,
@@ -123,7 +140,6 @@ export default function ChatPage() {
         <Navbar />
 
         <div className="flex flex-1 overflow-hidden p-4 gap-3">
-          {/* Sidebar Kiri */}
           <ChatSidebar
             activeConversationId={activeConversationId}
             onSelectConversation={(id, msgs) => {
@@ -140,7 +156,6 @@ export default function ChatPage() {
             }}
           />
 
-          {/* Area Chat Tengah */}
           <main
             className="flex-1 flex flex-col overflow-hidden bg-white"
             style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
@@ -256,7 +271,7 @@ export default function ChatPage() {
                             className="px-4 py-2.5 text-sm text-gray-600 italic"
                             style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 12px 2px", backgroundColor: "white" }}
                           >
-                            Mengarahkan ke halaman tiket...
+                            Membuat tiket... Mengarahkan ke halaman tiket...
                           </div>
                         </div>
                       );
@@ -287,7 +302,6 @@ export default function ChatPage() {
               )}
             </div>
 
-            {/* Input Bar */}
             <div className="p-4 border-t" style={{ borderColor: "#D4E6F7" }}>
               <div
                 className="flex items-center gap-3 px-4 py-3 bg-white"
@@ -316,7 +330,6 @@ export default function ChatPage() {
             </div>
           </main>
 
-          {/* Panel FAQ Kanan */}
           <aside
             className="w-56 bg-white shrink-0 p-4"
             style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
