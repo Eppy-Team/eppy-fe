@@ -83,15 +83,8 @@ export default function TicketsPage() {
                   {loading ? (
                     <p className="text-sm text-gray-500">Memuat tiket...</p>
                   ) : tickets.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 gap-4">
+                    <div className="flex flex-col items-center justify-center py-16">
                       <p className="text-sm text-gray-500">Belum ada tiket yang dibuat.</p>
-                      <button
-                        onClick={() => router.push("/tickets/new")}
-                        className="px-6 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-                        style={{ backgroundColor: "#003087", borderRadius: "4px" }}
-                      >
-                        Buat Tiket Baru
-                      </button>
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3">
@@ -121,15 +114,6 @@ export default function TicketsPage() {
                           </div>
                         );
                       })}
-                      <div className="flex justify-center mt-4">
-                        <button
-                          onClick={() => router.push("/tickets/new")}
-                          className="px-6 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-                          style={{ backgroundColor: "#003087", borderRadius: "4px" }}
-                        >
-                          + Buat Tiket Baru
-                        </button>
-                      </div>
                     </div>
                   )}
                 </div>

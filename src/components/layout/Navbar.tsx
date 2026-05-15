@@ -2,6 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+
+const navItems = [
+  { label: "Produk", url: "https://www.epson.co.id/id/viewcon/corporatesite/product/maincontent/index" },
+  { label: "Solusi", url: "https://www.epson.co.id/id/viewcon/corporatesite/solution/maincontent/index" },
+  { label: "Tempat Pembelian", url: "https://www.epson.co.id/id/viewcon/corporatesite/wheretobuy/maincontent/index" },
+  { label: "Dukungan", url: "https://www.epson.co.id/id/viewcon/corporatesite/support/maincontent/index" },
+  { label: "Keberlanjutan", url: "https://www.epson.co.id/id/viewcon/corporatesite/sustainability/maincontent/index" },
+];
 
 export default function Navbar() {
   const router = useRouter();
@@ -31,10 +40,16 @@ export default function Navbar() {
 
       {/* Nav Links */}
       <div className="flex items-center gap-8">
-        {["Produk", "Solusi", "Tempat Pembelian", "Dukungan", "Keberlanjutan"].map((item) => (
-          <button key={item} className="text-sm text-gray-700 font-medium transition-colors hover:text-epson-navy">
-            {item}
-          </button>
+        {navItems.map((item) => (
+          <Link
+            key={item.label}
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700"
+          >
+            {item.label}
+          </Link>
         ))}
       </div>
 

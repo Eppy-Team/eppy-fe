@@ -6,6 +6,15 @@ import AuthGuard from "@/components/AuthGuard";
 import { getAllKnowledges, createKnowledge, deleteKnowledge } from "@/lib/api";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
+import Link from "next/link";
+
+const navItems = [
+  { label: "Produk", url: "https://www.epson.co.id/id/viewcon/corporatesite/product/maincontent/index" },
+  { label: "Solusi", url: "https://www.epson.co.id/id/viewcon/corporatesite/solution/maincontent/index" },
+  { label: "Tempat Pembelian", url: "https://www.epson.co.id/id/viewcon/corporatesite/wheretobuy/maincontent/index" },
+  { label: "Dukungan", url: "https://www.epson.co.id/id/viewcon/corporatesite/support/maincontent/index" },
+  { label: "Keberlanjutan", url: "https://www.epson.co.id/id/viewcon/corporatesite/sustainability/maincontent/index" },
+];
 
 type KBItem = {
   id: string;
@@ -23,8 +32,16 @@ const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
       <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>EPSON</span>
     </button>
     <div className="flex items-center gap-8">
-      {["Produk", "Solusi", "Tempat Pembelian", "Dukungan", "Keberlanjutan"].map((item) => (
-        <button key={item} className="text-sm text-gray-700 font-medium">{item}</button>
+      {navItems.map((item) => (
+        <Link
+          key={item.label}
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700"
+        >
+          {item.label}
+        </Link>
       ))}
     </div>
     <button
@@ -48,7 +65,7 @@ const AdminSidebar = ({ active, router }: { active: string; router: ReturnType<t
   ];
 
   return (
-    <aside className="w-64 bg-white flex flex-col shrink-0"
+    <aside className="w-56 bg-white flex flex-col shrink-0"
       style={{ borderRight: "1px solid #D4E6F7", position: "sticky", top: "57px", height: "calc(100vh - 57px)", overflowY: "auto" }}>
       <div className="p-4 flex flex-col gap-1">
         {items.map((item) => {
@@ -133,11 +150,11 @@ export default function KnowledgeBasePage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#DDEAF6" }}>
+      <div className="flex flex-col" style={{ height: "100vh", overflow: "hidden", backgroundColor: "#F0F7FF" }}>
         <AdminNavbar router={router} />
-        <div className="flex" style={{ minHeight: "calc(100vh - 57px)" }}>
+        <div className="flex" style={{ height: "calc(100vh - 57px)", overflow: "hidden" }}>
           <AdminSidebar active="/knowledge-base" router={router} />
-          <main className="flex-1 p-8 overflow-y-auto">
+          <main className="flex-1 p-8" style={{ height: "100%", overflowY: "auto", backgroundColor: "#F0F7FF" }}>
             {!showForm ? (
               <div className="w-full pr-8">
                 {loading ? (

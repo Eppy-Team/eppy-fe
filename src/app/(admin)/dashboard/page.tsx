@@ -3,6 +3,15 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getDashboardChatbot, exportReport } from "@/lib/api";
+import Link from "next/link";
+
+const navItems = [
+  { label: "Produk", url: "https://www.epson.co.id/id/viewcon/corporatesite/product/maincontent/index" },
+  { label: "Solusi", url: "https://www.epson.co.id/id/viewcon/corporatesite/solution/maincontent/index" },
+  { label: "Tempat Pembelian", url: "https://www.epson.co.id/id/viewcon/corporatesite/wheretobuy/maincontent/index" },
+  { label: "Dukungan", url: "https://www.epson.co.id/id/viewcon/corporatesite/support/maincontent/index" },
+  { label: "Keberlanjutan", url: "https://www.epson.co.id/id/viewcon/corporatesite/sustainability/maincontent/index" },
+];
 
 const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
   <nav className="w-full bg-white border-b px-8 py-3 flex items-center justify-between sticky top-0 z-50"
@@ -11,8 +20,16 @@ const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
       <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>EPSON</span>
     </button>
     <div className="flex items-center gap-8">
-      {["Produk", "Solusi", "Tempat Pembelian", "Dukungan", "Keberlanjutan"].map((item) => (
-        <button key={item} className="text-sm text-gray-700 font-medium">{item}</button>
+      {navItems.map((item) => (
+        <Link
+          key={item.label}
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700"
+        >
+          {item.label}
+        </Link>
       ))}
     </div>
     <button onClick={() => router.push("/login")}
@@ -28,8 +45,8 @@ const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
 
 const AdminSidebar = ({ active, router }: { active: string; router: ReturnType<typeof useRouter> }) => {
   const items = [
-    { label: "Dasbor Chatbot", path: "/dashboard", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> },
-    { label: "Dasbor Tiket", path: "/admin-tickets", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 12v10H4V12" /><path d="M22 7H2v5h20V7z" /></svg> },
+    { label: "Dashboard Chatbot", path: "/dashboard", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg> },
+    { label: "Dashboard Tiket", path: "/admin-tickets", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 12v10H4V12" /><path d="M22 7H2v5h20V7z" /></svg> },
     { label: "Knowledge Based", path: "/knowledge-base", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg> },
   ];
   return (
@@ -220,7 +237,7 @@ export default function DashboardPage() {
         <AdminSidebar active="/dashboard" router={router} />
 
         <main className="flex-1 p-8" style={{ height: "100%", overflowY: "auto", backgroundColor: "#F0F7FF" }}>
-          <h1 className="text-2xl font-bold mb-6" style={{ color: "#003087" }}>Dasbor Chatbot</h1>
+          <h1 className="text-2xl font-bold mb-6" style={{ color: "#003087" }}>Dashboard Chatbot</h1>
 
           <div className="bg-white rounded-xl p-6 mb-4" style={{ border: "1px solid #D4E6F7" }}>
 

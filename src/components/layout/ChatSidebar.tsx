@@ -136,20 +136,55 @@ export default function ChatSidebar({ activeConversationId = null, onSelectConve
         {conversations.length === 0 ? (
           <p className="text-xs text-gray-400 px-3">Belum ada percakapan</p>
         ) : (
-          conversations.map((conv) => (
-            <button
-              key={conv.id}
-              onClick={() => handleSelectConversation(conv)}
-              className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-epson-light transition-colors w-full text-left truncate"
-              style={{
-                backgroundColor: activeConversationId === conv.id ? "#DDEAF6" : "transparent",
-                fontWeight: activeConversationId === conv.id ? 600 : 400,
-                color: activeConversationId === conv.id ? "#003087" : "#6b7280",
-              }}
-            >
-              {conv.title || "Percakapan"}
-            </button>
-          ))
+          (() => {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            const groups: Record<string, Conversation[]> = {};
+            conversations.forEach((conv) => {
+              const date = new Date(conv.createdAt);
+              const isToday = date.toDateString() === today.toDateString();
+              const isYesterday = date.toDateString() === yesterday.toDateString();
+              const key = isToday ? "Hari Ini" : isYesterday ? "Kemarin" : date.toLocaleDateString("id-ID", { day: "numeric", month: "long" });
+              if (!groups[key]) groups[key] = [];
+              groups[key].push(conv);
+            });
+
+            return Object.entries(groups).map(([group, convs]) => (
+              <div key={group}>
+                <p className="text-xs font-semibold text-gray-400 px-3 py-1 mt-2 uppercase tracking-wide">
+                  {group}
+                </p>
+                {convs.map((conv) => {
+                  const isActive = activeConversationId === conv.id;
+                  return (
+                    <button
+                      key={conv.id}
+                      onClick={() => handleSelectConversation(conv)}
+                      className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-blue-50"
+                      style={{
+                        backgroundColor: isActive ? "#DDEAF6" : "transparent",
+                      }}
+                    >
+                      <p
+                        className="text-sm truncate"
+                        style={{
+                          color: isActive ? "#003087" : "#374151",
+                          fontWeight: isActive ? 600 : 400,
+                        }}
+                      >
+                        {conv.title || "Percakapan"}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {new Date(conv.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            ));
+          })()
         )}
       </div>
     </aside>

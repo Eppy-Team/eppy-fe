@@ -6,6 +6,15 @@ import AuthGuard from "@/components/AuthGuard";
 import { getAllTicketsAdmin, updateTicketStatus, respondTicket } from "@/lib/api";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
+import Link from "next/link";
+
+const navItems = [
+  { label: "Produk", url: "https://www.epson.co.id/id/viewcon/corporatesite/product/maincontent/index" },
+  { label: "Solusi", url: "https://www.epson.co.id/id/viewcon/corporatesite/solution/maincontent/index" },
+  { label: "Tempat Pembelian", url: "https://www.epson.co.id/id/viewcon/corporatesite/wheretobuy/maincontent/index" },
+  { label: "Dukungan", url: "https://www.epson.co.id/id/viewcon/corporatesite/support/maincontent/index" },
+  { label: "Keberlanjutan", url: "https://www.epson.co.id/id/viewcon/corporatesite/sustainability/maincontent/index" },
+];
 
 const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
   <nav className="w-full bg-white border-b px-8 py-3 flex items-center justify-between sticky top-0 z-50"
@@ -14,8 +23,16 @@ const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
       <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>EPSON</span>
     </button>
     <div className="flex items-center gap-8">
-      {["Produk", "Solusi", "Tempat Pembelian", "Dukungan", "Keberlanjutan"].map((item) => (
-        <button key={item} className="text-sm text-gray-700 font-medium">{item}</button>
+      {navItems.map((item) => (
+        <Link
+          key={item.label}
+          href={item.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700"
+        >
+          {item.label}
+        </Link>
       ))}
     </div>
     <button onClick={() => router.push("/login")}

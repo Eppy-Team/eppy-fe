@@ -12,56 +12,155 @@ const faqData: Record<string, { title: string; items: { q: string; a: string }[]
       {
         q: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
         a: `Untuk menghubungkan printer Epson ke jaringan Wi-Fi, ikuti langkah-langkah berikut:
-1. Nyalakan printer Epson.
-   Pastikan printer dalam keadaan hidup dan tidak sedang mencetak.
-2. Tekan tombol Wi-Fi pada printer.
-   Tahan hingga lampu indikator Wi-Fi mulai berkedip. Ini menandakan printer siap disambungkan.
+1. Nyalakan printer Epson. Pastikan printer dalam keadaan hidup dan tidak sedang mencetak.
+2. Tekan tombol Wi-Fi pada printer. Tahan hingga lampu indikator Wi-Fi mulai berkedip.
 3. Gunakan WPS (jika router mendukung):
-   • Tekan tombol WPS pada router dalam waktu 2 menit setelah menekan tombol Wi-Fi di printer.
-   • Tunggu hingga lampu Wi-Fi pada printer berhenti berkedip dan menyala stabil.
-   • Artinya printer sudah berhasil terhubung ke jaringan Wi-Fi.
+   • Tekan tombol WPS pada router dalam waktu 2 menit.
+   • Tunggu hingga lampu Wi-Fi pada printer menyala stabil.
 4. Jika tanpa WPS (manual setup):
-   • Hubungkan laptop/PC ke jaringan Wi-Fi yang sama dengan printer.
    • Jalankan Epson Printer Setup Utility di komputer.
    • Pilih Wireless Connection → Set up printer for the first time.
-   • Ikuti petunjuk di layar untuk memasukkan SSID (nama Wi-Fi) dan password.
-5. Konfirmasi koneksi.
-   Setelah berhasil, coba cetak Network Status Sheet dari menu printer untuk memastikan koneksi sudah aktif.`,
+   • Masukkan SSID dan password Wi-Fi.
+5. Cetak Network Status Sheet untuk memastikan koneksi aktif.`,
       },
       {
-        q: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
-        a: "Jawaban untuk pertanyaan kedua tentang koneksi Wi-Fi printer Epson.",
+        q: "Mengapa tinta tidak keluar padahal kartrid masih penuh?",
+        a: `Beberapa penyebab tinta tidak keluar meski kartrid penuh:
+1. Head printer tersumbat — jalankan Head Cleaning dari menu printer atau software Epson.
+2. Nozzle kering — lakukan Nozzle Check untuk melihat pola cetakan.
+3. Kartrid baru belum terpasang dengan benar — lepas dan pasang kembali kartrid.
+4. Driver printer bermasalah — hapus dan install ulang driver dari epson.com.
+Jika masalah berlanjut setelah 3x cleaning, bawa ke service center Epson terdekat.`,
       },
       {
-        q: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
-        a: "Jawaban untuk pertanyaan ketiga tentang koneksi Wi-Fi printer Epson.",
+        q: "Bagaimana cara membersihkan head printer Epson?",
+        a: `Langkah membersihkan head printer Epson:
+1. Buka Epson Printer Utility di komputer.
+2. Pilih menu Maintenance → Head Cleaning.
+3. Klik Start dan tunggu proses selesai (±2 menit).
+4. Setelah selesai, lakukan Nozzle Check untuk memastikan hasilnya.
+5. Ulangi maksimal 3 kali jika masih bermasalah.
+Catatan: Proses cleaning menggunakan sedikit tinta, jangan terlalu sering.`,
       },
       {
-        q: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
-        a: "Jawaban untuk pertanyaan keempat tentang koneksi Wi-Fi printer Epson.",
+        q: "Bagaimana cara menggunakan Epson iPrint?",
+        a: `Cara mencetak menggunakan Epson iPrint:
+1. Unduh aplikasi Epson iPrint dari App Store atau Google Play.
+2. Pastikan smartphone dan printer terhubung ke jaringan Wi-Fi yang sama.
+3. Buka aplikasi → pilih printer Epson yang ingin digunakan.
+4. Pilih dokumen atau foto yang ingin dicetak.
+5. Atur ukuran kertas dan kualitas cetak sesuai kebutuhan.
+6. Tekan Print untuk mulai mencetak.`,
       },
       {
-        q: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
-        a: "Jawaban untuk pertanyaan kelima tentang koneksi Wi-Fi printer Epson.",
+        q: "Kenapa hasil cetakan bergaris atau tidak rata?",
+        a: `Hasil cetakan bergaris biasanya disebabkan oleh:
+1. Head printer kotor atau tersumbat → lakukan Head Cleaning.
+2. Tinta hampir habis → periksa level tinta dan isi jika perlu.
+3. Kertas lembab atau tidak sesuai spesifikasi → ganti kertas yang direkomendasikan.
+4. Setting kualitas cetak terlalu rendah → ubah ke mode High Quality di pengaturan cetak.`,
       },
       {
-        q: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
-        a: "Jawaban untuk pertanyaan keenam tentang koneksi Wi-Fi printer Epson.",
+        q: "Bagaimana cara reset printer Epson?",
+        a: `Cara melakukan reset printer Epson:
+1. Matikan printer dengan menekan tombol Power.
+2. Tahan tombol Reset (atau tombol khusus sesuai model) saat menyalakan kembali.
+3. Lepaskan tombol setelah lampu berkedip.
+4. Printer akan kembali ke pengaturan pabrik.
+Untuk reset ink pad counter, gunakan Epson Adjustment Program yang tersedia di website resmi Epson.`,
       },
     ],
   },
   scanner: {
     title: "FAQ Dukungan Pemindai",
     items: [
-      { q: "Bagaimana cara menggunakan pemindai Epson?", a: "Jawaban tentang penggunaan pemindai Epson." },
-      { q: "Pemindai tidak terdeteksi di komputer?", a: "Jawaban tentang pemindai tidak terdeteksi." },
+      {
+        q: "Bagaimana cara menggunakan pemindai Epson untuk pertama kali?",
+        a: `Langkah menggunakan pemindai Epson:
+1. Hubungkan pemindai ke komputer via USB atau Wi-Fi.
+2. Install driver dan software Epson Scan 2 dari epson.com.
+3. Letakkan dokumen menghadap ke bawah di atas kaca pemindai.
+4. Buka Epson Scan 2, pilih mode (Full Auto/Office/Professional).
+5. Klik Preview untuk melihat pratinjau, lalu Scan untuk memindai.
+6. Simpan file dalam format yang diinginkan (PDF, JPEG, dll).`,
+      },
+      {
+        q: "Pemindai tidak terdeteksi di komputer, bagaimana solusinya?",
+        a: `Jika pemindai Epson tidak terdeteksi:
+1. Periksa kabel USB — coba ganti port USB atau gunakan kabel lain.
+2. Restart komputer dan pemindai.
+3. Pastikan driver Epson Scan sudah terinstall dengan benar.
+4. Uninstall dan install ulang driver dari epson.com.
+5. Untuk koneksi Wi-Fi, pastikan pemindai dan komputer di jaringan yang sama.
+6. Nonaktifkan sementara firewall/antivirus dan coba scan ulang.`,
+      },
+      {
+        q: "Hasil scan buram atau kualitasnya rendah?",
+        a: `Cara meningkatkan kualitas hasil scan:
+1. Naikkan resolusi scan ke minimal 300 DPI (untuk dokumen) atau 600 DPI (untuk foto).
+2. Bersihkan kaca pemindai dengan kain microfiber yang lembut.
+3. Pastikan dokumen tidak terlipat dan menempel rata di kaca.
+4. Pilih mode warna yang sesuai (Color untuk foto, Grayscale untuk dokumen).
+5. Aktifkan fitur Image Adjustment di Epson Scan 2 untuk hasil optimal.`,
+      },
+      {
+        q: "Bagaimana cara scan ke PDF menggunakan Epson?",
+        a: `Cara scan ke format PDF:
+1. Buka Epson Scan 2 atau aplikasi Document Capture Pro.
+2. Letakkan dokumen di atas kaca atau di ADF (Auto Document Feeder).
+3. Di menu File Save Settings, pilih format PDF.
+4. Untuk scan multi-halaman, centang opsi Multi-Page PDF.
+5. Klik Scan dan tentukan lokasi penyimpanan file.`,
+      },
     ],
   },
   projector: {
     title: "FAQ Proyektor",
     items: [
-      { q: "Bagaimana cara menghubungkan proyektor ke laptop?", a: "Jawaban tentang koneksi proyektor ke laptop." },
-      { q: "Gambar proyektor buram, bagaimana mengatasinya?", a: "Jawaban tentang gambar proyektor buram." },
+      {
+        q: "Bagaimana cara menghubungkan proyektor Epson ke laptop?",
+        a: `Cara menghubungkan proyektor ke laptop:
+1. Via HDMI (direkomendasikan):
+   • Sambungkan kabel HDMI dari laptop ke port HDMI proyektor.
+   • Nyalakan proyektor dan pilih source HDMI.
+   • Di laptop tekan Win + P → pilih Duplicate atau Extend.
+2. Via VGA:
+   • Sambungkan kabel VGA dan pastikan kencang.
+   • Beberapa laptop memerlukan adapter VGA.
+3. Via Wi-Fi (Wireless):
+   • Install Epson iProjection di laptop.
+   • Hubungkan ke jaringan yang sama dengan proyektor.
+   • Buka aplikasi dan pilih proyektor yang tersedia.`,
+      },
+      {
+        q: "Gambar proyektor buram, bagaimana mengatasinya?",
+        a: `Cara mengatasi gambar proyektor yang buram:
+1. Putar cincin fokus (focus ring) pada lensa proyektor hingga gambar tajam.
+2. Periksa jarak proyektor ke layar — sesuaikan dengan throw ratio proyektor.
+3. Bersihkan lensa dengan kain microfiber yang bersih dan kering.
+4. Aktifkan fitur Auto Keystone Correction untuk meluruskan gambar.
+5. Pastikan resolusi output laptop sesuai dengan resolusi native proyektor.`,
+      },
+      {
+        q: "Proyektor tidak menampilkan gambar meski sudah terhubung?",
+        a: `Langkah troubleshooting proyektor tidak tampil gambar:
+1. Pastikan proyektor sudah menyala dan source input sudah benar (HDMI/VGA).
+2. Di laptop, tekan Win + P dan pilih Duplicate.
+3. Coba restart proyektor dan laptop.
+4. Ganti kabel HDMI/VGA dengan yang lain untuk memastikan kabel tidak rusak.
+5. Periksa apakah lampu proyektor menyala normal (tidak berkedip merah).`,
+      },
+      {
+        q: "Bagaimana cara mengatur keystone proyektor?",
+        a: `Cara mengatur keystone proyektor Epson:
+1. Otomatis: Aktifkan Auto Keystone dari menu Settings proyektor.
+2. Manual Horizontal/Vertical:
+   • Tekan tombol Keystone pada remote atau panel proyektor.
+   • Gunakan tombol panah untuk menyesuaikan hingga gambar berbentuk persegi.
+3. Quick Corner:
+   • Masuk menu Settings → Keystone → Quick Corner.
+   • Atur setiap sudut secara independen untuk koreksi lebih presisi.`,
+      },
     ],
   },
 };
