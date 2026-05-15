@@ -4,7 +4,6 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import AuthGuard from "@/components/AuthGuard";
-import { createTicket } from "@/lib/api";
 
 export default function NewTicketPage() {
   const router = useRouter();
@@ -26,20 +25,7 @@ export default function NewTicketPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
-    try {
-      const res = await createTicket(
-        form.produk,
-        form.deskripsi,
-        form.produk
-      );
-      setTicketId(res.data?.id?.slice(0, 8).toUpperCase() || "XXXXXX");
-      setSubmitted(true);
-    } catch {
-      alert("Gagal membuat tiket. Silakan coba lagi.");
-    } finally {
-      setSubmitting(false);
-    }
+    router.push("/chat");
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {

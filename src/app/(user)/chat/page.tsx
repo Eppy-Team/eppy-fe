@@ -36,17 +36,34 @@ export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [lastMessageId, setLastMessageId] = useState<string | null>(null);
   const [lastUserMessage, setLastUserMessage] = useState<string>("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const sendMessage = async (text: string, image?: File) => {
+    if (!text.trim() && !image) return;
 
     setMessages((prev) => [...prev, { type: "user", content: text }]);
     setInput("");
+    clearImage();
     setIsTyping(true);
     setFeedbackGiven(false);
     setEscalationAnswered(false);
@@ -61,7 +78,8 @@ export default function ChatPage() {
         setActiveConversationId(conversationId);
       }
 
-      const res = await sendChat(conversationId!, text);
+      const res = await sendChat(conversationId!, text, image);
+
       const botContent = res.data?.assistantMessage?.content || "Maaf, tidak ada respons.";
       const messageId = res.data?.assistantMessage?.id || null;
 
@@ -72,10 +90,10 @@ export default function ChatPage() {
         { type: "bot", content: botContent, messageId },
         { type: "feedback" },
       ]);
-    } catch {
+    } catch (err: any) {
       setMessages((prev) => [
         ...prev,
-        { type: "bot", content: "Maaf, terjadi kesalahan. Silakan coba lagi." },
+        { type: "bot", content: err.message || "Maaf, terjadi kesalahan. Silakan coba lagi." },
       ]);
     } finally {
       setIsTyping(false);
@@ -116,9 +134,11 @@ export default function ChatPage() {
       ]);
 
       try {
+        // Di chat/page.tsx — tambah category
         await createTicket(
           lastUserMessage.slice(0, 100),
           lastUserMessage,
+          "General", // ← tambah category, bisa disesuaikan
           activeConversationId!,
           lastMessageId!
         );
@@ -241,7 +261,7 @@ export default function ChatPage() {
                       return (
                         <div key={i} className="flex flex-col gap-2">
                           <p className="text-sm text-gray-600 font-medium">
-                            Apakah Anda Ingin Membuat Tiket ?
+                            Apakah Anda Ingin Membuat Tiket?
                           </p>
                           <div className="flex gap-2">
                             <button
@@ -302,23 +322,69 @@ export default function ChatPage() {
               )}
             </div>
 
+            {/* Image Preview */}
+            {imagePreview && (
+              <div className="px-4 pt-3 flex items-center gap-2">
+                <div className="relative w-16 h-16">
+                  <img
+                    src={imagePreview}
+                    alt="preview"
+                    className="w-16 h-16 object-cover rounded"
+                    style={{ border: "1px solid #D4E6F7" }}
+                  />
+                  <button
+                    onClick={clearImage}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center text-white text-xs"
+                    style={{ backgroundColor: "#e11d48" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+                <span className="text-xs text-gray-500">{selectedImage?.name}</span>
+              </div>
+            )}
+
+            {/* Input Area */}
             <div className="p-4 border-t" style={{ borderColor: "#D4E6F7" }}>
               <div
                 className="flex items-center gap-3 px-4 py-3 bg-white"
                 style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
               >
+                {/* Tombol Upload Gambar */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center justify-center hover:opacity-70 transition-opacity shrink-0"
+                  title="Lampirkan gambar"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <polyline points="21 15 16 10 5 21" />
+                  </svg>
+                </button>
+
                 <input
                   type="text"
                   placeholder="Mulai Mencari..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") sendMessage(input, selectedImage ?? undefined);
+                  }}
                   className="flex-1 text-sm text-gray-700 placeholder:text-gray-400 outline-none bg-transparent"
                 />
+
                 <button
-                  onClick={() => sendMessage(input)}
+                  onClick={() => sendMessage(input, selectedImage ?? undefined)}
                   disabled={isTyping}
-                  className="flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50"
+                  className="flex items-center justify-center hover:opacity-80 transition-opacity disabled:opacity-50 shrink-0"
                   style={{ width: "32px", height: "32px", backgroundColor: "#003087", borderRadius: "4px" }}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">

@@ -11,7 +11,6 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast, showToast, hideToast } = useToast();
 
@@ -29,7 +28,7 @@ export default function LoginPage() {
 
       setTimeout(() => {
         const role = data.data.user.role;
-        if (role === "ADMIN" || isAdmin) {
+        if (role === "ADMIN") {
           router.push("/dashboard");
         } else {
           router.push("/chat");
@@ -47,7 +46,6 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#DDEAF6" }}>
       <Navbar />
 
-      {/* Toast */}
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
       <div className="flex-1 flex items-center justify-center px-4">
@@ -91,20 +89,6 @@ export default function LoginPage() {
                 className="w-full px-4 py-2.5 text-sm bg-white placeholder:text-gray-400 focus:outline-none"
                 style={{ border: "1px solid #B8D0E8", borderRadius: "4px" }}
               />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isAdmin"
-                checked={isAdmin}
-                onChange={(e) => setIsAdmin(e.target.checked)}
-                className="w-4 h-4 cursor-pointer"
-                style={{ accentColor: "#0070C0" }}
-              />
-              <label htmlFor="isAdmin" className="text-sm text-gray-600 cursor-pointer select-none">
-                Masuk Sebagai Admin
-              </label>
             </div>
 
             <div className="flex justify-center mt-2">

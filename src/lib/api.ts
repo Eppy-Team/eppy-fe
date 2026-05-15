@@ -73,11 +73,19 @@ export const getDetailConversation = async (conversationId: string) => {
   return data;
 };
 
-export const sendChat = async (conversationId: string, content: string) => {
+// ⚠️ DIUPDATE: pakai form-data karena ada optional image
+export const sendChat = async (conversationId: string, content: string, image?: File) => {
+  const formData = new FormData();
+  formData.append("content", content);
+  if (image) formData.append("image", image);
+
   const res = await fetch(`${BASE_URL}/conversations/${conversationId}/messages`, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify({ content }),
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+      // ⚠️ Jangan set Content-Type manual — biarkan browser set boundary untuk form-data
+    },
+    body: formData,
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal mengirim pesan");
@@ -85,6 +93,8 @@ export const sendChat = async (conversationId: string, content: string) => {
 };
 
 // ==================== KNOWLEDGE BASE ====================
+
+// ✅ Tidak perlu diubah — sudah benar
 export const createKnowledge = async (title: string, category: string, file: File) => {
   const formData = new FormData();
   formData.append("title", title);
@@ -103,8 +113,9 @@ export const createKnowledge = async (title: string, category: string, file: Fil
   return data;
 };
 
-export const getAllKnowledges = async () => {
-  const res = await fetch(`${BASE_URL}/knowledge`, {
+// ⚠️ DIUPDATE: tambah pagination (page, limit)
+export const getAllKnowledges = async (page = 1, limit = 10) => {
+  const res = await fetch(`${BASE_URL}/knowledge?page=${page}&limit=${limit}`, {
     method: "GET",
     headers: authHeaders(),
   });
@@ -113,6 +124,7 @@ export const getAllKnowledges = async () => {
   return data;
 };
 
+// ✅ Tidak perlu diubah
 export const getDetailKnowledge = async (knowledgeId: string) => {
   const res = await fetch(`${BASE_URL}/knowledge/${knowledgeId}`, {
     method: "GET",
@@ -123,6 +135,7 @@ export const getDetailKnowledge = async (knowledgeId: string) => {
   return data;
 };
 
+// ✅ Tidak perlu diubah
 export const deleteKnowledge = async (knowledgeId: string) => {
   const res = await fetch(`${BASE_URL}/knowledge/${knowledgeId}`, {
     method: "DELETE",
@@ -135,11 +148,17 @@ export const deleteKnowledge = async (knowledgeId: string) => {
 };
 
 // ==================== TICKET (USER) ====================
-export const createTicket = async (title: string, description: string, conversationId: string, messageId: string) => {
+export const createTicket = async (
+  title: string,
+  description: string,
+  category: string,
+  conversationId: string,
+  messageId: string
+) => {
   const res = await fetch(`${BASE_URL}/tickets/`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ title, description, conversationId, messageId }),
+    body: JSON.stringify({ title, description, category, conversationId, messageId }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal membuat tiket");
@@ -198,13 +217,73 @@ export const updateTicketStatus = async (ticketId: string, status: string) => {
   return data;
 };
 
+// ⚠️ DIUPDATE: field name dari adminResponse → response
 export const respondTicket = async (ticketId: string, adminResponse: string) => {
   const res = await fetch(`${BASE_URL}/tickets/admin/${ticketId}/respond`, {
     method: "PATCH",
     headers: authHeaders(),
-    body: JSON.stringify({ adminResponse }),
+    body: JSON.stringify({ response: adminResponse }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal mengirim respons tiket");
   return data;
+};
+
+// ==================== DASHBOARD ====================
+
+// ⚠️ BARU: Get chatbot activity statistics
+export const getDashboardChatbot = async (page = 1, limit = 10, status?: string) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    ...(status ? { status } : {}),
+  });
+  const res = await fetch(`${BASE_URL}/dashboard/chatbot?${params}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengambil data dashboard chatbot");
+  return data;
+};
+
+// ⚠️ BARU: Get ticket statistics
+export const getDashboardTicket = async (page = 1, limit = 10, status?: string) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    ...(status ? { status } : {}),
+  });
+  const res = await fetch(`${BASE_URL}/dashboard/tickets?${params}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengambil data dashboard tiket");
+  return data;
+};
+
+// ⚠️ BARU: Export report JSON format
+export const exportReportJSON = async (startDate: string, endDate: string) => {
+  const params = new URLSearchParams({ startDate, endDate });
+  const res = await fetch(`${BASE_URL}/dashboard/report?${params}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal export laporan JSON");
+  return data;
+};
+
+// ✅ SUDAH ADA — update parameter name agar konsisten
+export const exportReport = async (format: "excel" | "pdf", startDate: string, endDate: string) => {
+  const params = new URLSearchParams({ startDate, endDate, format });
+  const res = await fetch(`${BASE_URL}/dashboard/report/export?${params}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+  if (!res.ok) throw new Error("Gagal export laporan");
+  return res.blob();
 };

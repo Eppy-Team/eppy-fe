@@ -135,7 +135,7 @@ export default function AdminTicketsPage() {
         <AdminNavbar router={router} />
         <div className="flex" style={{ height: "calc(100vh - 57px)", overflow: "hidden" }}>
           <AdminSidebar active="/admin-tickets" router={router} />
-          <main className="flex-1 p-8" style={{ height: "100%", overflowY: "auto" }}>
+          <main className="flex-1 p-8" style={{ height: "100%", overflowY: "auto", backgroundColor: "#F0F7FF" }}>
             <h1 className="text-2xl font-bold mb-6" style={{ color: "#003087" }}>Dashboard Tiket</h1>
 
             {!selectedTicket ? (
