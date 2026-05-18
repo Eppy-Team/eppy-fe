@@ -28,8 +28,9 @@ type KBItem = {
 const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
   <nav className="w-full bg-white border-b px-8 py-3 flex items-center justify-between sticky top-0 z-50"
     style={{ borderColor: "#D4E6F7" }}>
-    <button onClick={() => router.push("/dashboard")}>
-      <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>EPSON</span>
+    <button onClick={() => router.push("/dashboard")} className="flex items-center gap-3">
+      <img src="/images/eppy-logo.png" alt="Eppy" className="w-10 h-10 object-contain" />
+      <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>Eppy</span>
     </button>
     <div className="flex items-center gap-8">
       {navItems.map((item) => (

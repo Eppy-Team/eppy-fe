@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
-import { createConversation, sendChat, createTicket } from "@/lib/api";
+import { createConversation, sendChat, createTicket, sendFeedback } from "@/lib/api";
 
 type MessageType =
   | { type: "user"; content: string }
-  | { type: "bot"; content: string; messageId?: string }
-  | { type: "feedback" }
+  | { type: "bot"; content: string; messageId?: string; feedbackGiven?: "HELPFUL" | "NOT_HELPFUL" | null }
   | { type: "escalation" }
   | { type: "escalation-confirmed" };
 
@@ -31,7 +30,6 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [escalationAnswered, setEscalationAnswered] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [lastMessageId, setLastMessageId] = useState<string | null>(null);
@@ -65,7 +63,6 @@ export default function ChatPage() {
     setInput("");
     clearImage();
     setIsTyping(true);
-    setFeedbackGiven(false);
     setEscalationAnswered(false);
     setLastUserMessage(text);
 
@@ -87,8 +84,7 @@ export default function ChatPage() {
 
       setMessages((prev) => [
         ...prev,
-        { type: "bot", content: botContent, messageId },
-        { type: "feedback" },
+        { type: "bot", content: botContent, messageId, feedbackGiven: null },
       ]);
     } catch (err: any) {
       setMessages((prev) => [
@@ -100,25 +96,34 @@ export default function ChatPage() {
     }
   };
 
-  const handleFeedback = (helpful: boolean) => {
-    if (feedbackGiven) return;
-    setFeedbackGiven(true);
+  const handleFeedback = async (messageId: string, feedback: "HELPFUL" | "NOT_HELPFUL") => {
+    if (!activeConversationId || !messageId) return;
 
-    if (!helpful) {
-      setMessages((prev) => [
-        ...prev,
-        { type: "user", content: "❌ Tidak, belum membantu" },
-        {
-          type: "bot",
-          content: "Mohon maaf, saya belum dapat menemukan solusi yang sesuai. Apakah Anda ingin membuat tiket baru?",
-        },
-        { type: "escalation" },
-      ]);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        { type: "user", content: "✅ Ya, membantu" },
-      ]);
+    try {
+      await sendFeedback(activeConversationId, messageId, feedback);
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.type === "bot" && msg.messageId === messageId
+            ? { ...msg, feedbackGiven: feedback }
+            : msg
+        )
+      );
+
+      if (feedback === "NOT_HELPFUL") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "bot",
+            content: "Mohon maaf, saya belum dapat menemukan solusi yang sesuai. Apakah Anda ingin membuat tiket baru?",
+            messageId: undefined,
+            feedbackGiven: null,
+          },
+          { type: "escalation" },
+        ]);
+      }
+    } catch {
+      // abaikan error
     }
   };
 
@@ -134,11 +139,10 @@ export default function ChatPage() {
       ]);
 
       try {
-        // Di chat/page.tsx — tambah category
         await createTicket(
           lastUserMessage.slice(0, 100),
           lastUserMessage,
-          "General", // ← tambah category, bisa disesuaikan
+          "General",
           activeConversationId!,
           lastMessageId!
         );
@@ -165,13 +169,11 @@ export default function ChatPage() {
             onSelectConversation={(id, msgs) => {
               setActiveConversationId(id);
               setMessages(msgs);
-              setFeedbackGiven(false);
               setEscalationAnswered(false);
             }}
             onNewChat={() => {
               setActiveConversationId(null);
               setMessages([]);
-              setFeedbackGiven(false);
               setEscalationAnswered(false);
             }}
           />
@@ -222,38 +224,61 @@ export default function ChatPage() {
                     }
                     if (msg.type === "bot") {
                       return (
-                        <div key={i} className="flex justify-start">
-                          <div
-                            className="px-4 py-3 text-sm text-gray-700 max-w-xl whitespace-pre-line"
-                            style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 12px 2px", backgroundColor: "white" }}
-                          >
-                            {msg.content}
-                          </div>
-                        </div>
-                      );
-                    }
-                    if (msg.type === "feedback") {
-                      return (
-                        <div key={i} className="flex flex-col gap-2">
-                          <p className="text-sm text-gray-600">Apakah jawaban ini membantu?</p>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleFeedback(true)}
-                              disabled={feedbackGiven}
-                              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
-                              style={{ border: "1px solid #D4E6F7", borderRadius: "4px", backgroundColor: "white" }}
+                        <div key={i} className="flex flex-col gap-1">
+                          <div className="flex justify-start">
+                            <div
+                              className="px-4 py-3 text-sm text-gray-700 max-w-xl whitespace-pre-line"
+                              style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 12px 2px", backgroundColor: "white" }}
                             >
-                              ✅ Ya, membantu
-                            </button>
-                            <button
-                              onClick={() => handleFeedback(false)}
-                              disabled={feedbackGiven}
-                              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-all disabled:opacity-50"
-                              style={{ border: "1px solid #D4E6F7", borderRadius: "4px", backgroundColor: "white" }}
-                            >
-                              ❌ Tidak, belum membantu
-                            </button>
+                              {msg.content}
+                            </div>
                           </div>
+
+                          {/* Feedback buttons */}
+                          {msg.messageId && (
+                            <div className="flex items-center gap-2 pl-1">
+                              {msg.feedbackGiven === null ? (
+                                <>
+                                  <button
+                                    onClick={() => handleFeedback(msg.messageId!, "HELPFUL")}
+                                    className="flex items-center justify-center w-7 h-7 rounded-full transition-all hover:scale-110"
+                                    style={{ border: "1px solid #D4E6F7", backgroundColor: "white" }}
+                                    title="Membantu"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={() => handleFeedback(msg.messageId!, "NOT_HELPFUL")}
+                                    className="flex items-center justify-center w-7 h-7 rounded-full transition-all hover:scale-110"
+                                    style={{ border: "1px solid #D4E6F7", backgroundColor: "white" }}
+                                    title="Tidak membantu"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.5">
+                                      <line x1="18" y1="6" x2="6" y2="18" />
+                                      <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                  </button>
+                                </>
+                              ) : msg.feedbackGiven === "HELPFUL" ? (
+                                <span className="flex items-center gap-1 text-xs" style={{ color: "#16a34a" }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
+                                  Terima kasih!
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-1 text-xs" style={{ color: "#e11d48" }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.5">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                  Feedback terkirim
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     }
@@ -350,7 +375,6 @@ export default function ChatPage() {
                 className="flex items-center gap-3 px-4 py-3 bg-white"
                 style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
               >
-                {/* Tombol Upload Gambar */}
                 <input
                   ref={fileInputRef}
                   type="file"

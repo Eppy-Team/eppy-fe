@@ -6,8 +6,7 @@ import { getAllConversations, getDetailConversation } from "@/lib/api";
 
 type MessageType =
   | { type: "user"; content: string }
-  | { type: "bot"; content: string }
-  | { type: "feedback" }
+  | { type: "bot"; content: string; messageId?: string; feedbackGiven?: "HELPFUL" | "NOT_HELPFUL" | null }
   | { type: "escalation" }
   | { type: "escalation-confirmed" };
 
@@ -46,11 +45,7 @@ const menuItems = [
     label: "Cari Tiket",
     path: "/tickets",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M20 12v10H4V12" /><path d="M22 7H2v5h20V7z" /><path d="M12 22V7" />
-        <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-        <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-      </svg>
+      <img src="/images/headset-icon.png" alt="Tiket" className="w-4 h-4 object-contain" />
     ),
   },
 ];

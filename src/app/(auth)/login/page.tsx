@@ -101,6 +101,19 @@ export default function LoginPage() {
                 {loading ? "Memuat..." : "Masuk"}
               </button>
             </div>
+            <div className="flex justify-center mt-4">
+              <p className="text-sm text-gray-500">
+                Belum punya akun?{" "}
+                <button
+                  type="button"
+                  onClick={() => router.push("/register")}
+                  className="font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: "#0070C0" }}
+                >
+                  Daftar di sini
+                </button>
+              </p>
+            </div>
           </form>
         </div>
       </div>

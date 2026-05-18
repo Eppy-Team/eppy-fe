@@ -287,3 +287,15 @@ export const exportReport = async (format: "excel" | "pdf", startDate: string, e
   if (!res.ok) throw new Error("Gagal export laporan");
   return res.blob();
 };
+
+// ⚠️ BARU: Send feedback untuk pesan chatbot
+export const sendFeedback = async (conversationId: string, messageId: string, feedback: "HELPFUL" | "NOT_HELPFUL") => {
+  const res = await fetch(`${BASE_URL}/conversations/${conversationId}/messages/${messageId}/feedback`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ feedback }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengirim feedback");
+  return data;
+};
