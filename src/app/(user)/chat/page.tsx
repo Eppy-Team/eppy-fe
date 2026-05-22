@@ -6,6 +6,7 @@ import Navbar from "@/components/layout/Navbar";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
 import { createConversation, sendChat, createTicket, sendFeedback } from "@/lib/api";
+import ReactMarkdown from "react-markdown";
 
 type MessageType =
   | { type: "user"; content: string }
@@ -14,9 +15,9 @@ type MessageType =
   | { type: "escalation-confirmed" };
 
 const suggestions = [
-  "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
-  "Mengapa tinta tidak keluar padahal masih penuh?",
-  "Bagaimana cara menggunakan Epson iPrint untuk mencetak dokumen?",
+  "Bagaimana cara melakukan scan dokumen double-sided dan menyimpannya sebagai PDF?",
+  "Bagaimana cara mengatasi paper jam pada ADF scanner?",
+  "Bagaimana cara melakukan scan beberapa kuitansi sekaligus agar otomatis terpisah menjadi file individual?",
 ];
 
 const faqCategories = [
@@ -146,9 +147,9 @@ export default function ChatPage() {
           activeConversationId!,
           lastMessageId!
         );
-        setTimeout(() => router.push("/tickets"), 1000);
+        setTimeout(() => router.push("/tickets/new"), 1000);
       } catch {
-        setTimeout(() => router.push("/tickets"), 1000);
+        setTimeout(() => router.push("/tickets/new"), 1000);
       }
     } else {
       setMessages((prev) => [
@@ -156,6 +157,25 @@ export default function ChatPage() {
         { type: "user", content: "❌ Tidak" },
       ]);
     }
+  };
+
+  const renderMarkdown = (text: string) => {
+    const lines = text.split("\n");
+    return lines.map((line, i) => {
+      // Parse bold: **teks** → <strong>teks</strong>
+      const parts = line.split(/(\*\*[^*]+\*\*)/g);
+      return (
+        <span key={i}>
+          {parts.map((part, j) => {
+            if (part.startsWith("**") && part.endsWith("**")) {
+              return <strong key={j}>{part.slice(2, -2)}</strong>;
+            }
+            return <span key={j}>{part}</span>;
+          })}
+          {i < lines.length - 1 && <br />}
+        </span>
+      );
+    });
   };
 
   return (
@@ -217,65 +237,60 @@ export default function ChatPage() {
                             className="px-4 py-2.5 text-sm text-gray-700 max-w-sm"
                             style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 2px 12px", backgroundColor: "white" }}
                           >
-                            {msg.content}
+                            {renderMarkdown(msg.content)}
                           </div>
                         </div>
                       );
                     }
                     if (msg.type === "bot") {
                       return (
-                        <div key={i} className="flex flex-col gap-1">
+                        <div key={i} className="flex flex-col gap-2">
                           <div className="flex justify-start">
                             <div
-                              className="px-4 py-3 text-sm text-gray-700 max-w-xl whitespace-pre-line"
+                              className="px-4 py-3 text-sm text-gray-700 max-w-xl"
                               style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 12px 2px", backgroundColor: "white" }}
                             >
-                              {msg.content}
+                              <ReactMarkdown
+                                components={{
+                                  strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                  p: ({ children }) => <p className="mb-1">{children}</p>,
+                                  ul: ({ children }) => <ul className="list-disc pl-4 mb-1">{children}</ul>,
+                                  ol: ({ children }) => <ol className="list-decimal pl-4 mb-1">{children}</ol>,
+                                  li: ({ children }) => <li className="mb-0.5">{children}</li>,
+                                }}
+                              >
+                                {msg.content}
+                              </ReactMarkdown>
                             </div>
                           </div>
 
                           {/* Feedback buttons */}
                           {msg.messageId && (
-                            <div className="flex items-center gap-2 pl-1">
+                            <div className="flex flex-col gap-2">
                               {msg.feedbackGiven === null ? (
                                 <>
-                                  <button
-                                    onClick={() => handleFeedback(msg.messageId!, "HELPFUL")}
-                                    className="flex items-center justify-center w-7 h-7 rounded-full transition-all hover:scale-110"
-                                    style={{ border: "1px solid #D4E6F7", backgroundColor: "white" }}
-                                    title="Membantu"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => handleFeedback(msg.messageId!, "NOT_HELPFUL")}
-                                    className="flex items-center justify-center w-7 h-7 rounded-full transition-all hover:scale-110"
-                                    style={{ border: "1px solid #D4E6F7", backgroundColor: "white" }}
-                                    title="Tidak membantu"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.5">
-                                      <line x1="18" y1="6" x2="6" y2="18" />
-                                      <line x1="6" y1="6" x2="18" y2="18" />
-                                    </svg>
-                                  </button>
+                                  <p className="text-sm text-gray-600">Apakah jawaban ini membantu?</p>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleFeedback(msg.messageId!, "HELPFUL")}
+                                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-all hover:bg-blue-50"
+                                      style={{ border: "1px solid #D4E6F7", borderRadius: "4px", backgroundColor: "white" }}
+                                    >
+                                      ✅ Ya, membantu
+                                    </button>
+                                    <button
+                                      onClick={() => handleFeedback(msg.messageId!, "NOT_HELPFUL")}
+                                      className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-all hover:bg-blue-50"
+                                      style={{ border: "1px solid #D4E6F7", borderRadius: "4px", backgroundColor: "white" }}
+                                    >
+                                      ❌ Tidak, belum membantu
+                                    </button>
+                                  </div>
                                 </>
                               ) : msg.feedbackGiven === "HELPFUL" ? (
-                                <span className="flex items-center gap-1 text-xs" style={{ color: "#16a34a" }}>
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
-                                    <polyline points="20 6 9 17 4 12" />
-                                  </svg>
-                                  Terima kasih!
-                                </span>
+                                <p className="text-sm" style={{ color: "#16a34a" }}>✅ Terima kasih atas feedbacknya!</p>
                               ) : (
-                                <span className="flex items-center gap-1 text-xs" style={{ color: "#e11d48" }}>
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.5">
-                                    <line x1="18" y1="6" x2="6" y2="18" />
-                                    <line x1="6" y1="6" x2="18" y2="18" />
-                                  </svg>
-                                  Feedback terkirim
-                                </span>
+                                <p className="text-sm" style={{ color: "#e11d48" }}>❌ Feedback terkirim</p>
                               )}
                             </div>
                           )}

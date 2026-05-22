@@ -92,6 +92,22 @@ export const sendChat = async (conversationId: string, content: string, image?: 
   return data;
 };
 
+// ⚠️ BARU: Search message
+export const searchMessage = async (q: string, page = 1, limit = 10) => {
+  const params = new URLSearchParams({
+    q,
+    page: String(page),
+    limit: String(limit),
+  });
+  const res = await fetch(`${BASE_URL}/conversations/search?${params}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mencari pesan");
+  return data;
+};
+
 // ==================== KNOWLEDGE BASE ====================
 
 // ✅ Tidak perlu diubah — sudah benar
@@ -297,5 +313,28 @@ export const sendFeedback = async (conversationId: string, messageId: string, fe
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal mengirim feedback");
+  return data;
+};
+
+// ==================== AUTH ====================
+export const forgotPassword = async (email: string) => {
+  const res = await fetch(`${BASE_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal mengirim email reset password");
+  return data;
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  const res = await fetch(`${BASE_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, newPassword }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal reset password");
   return data;
 };

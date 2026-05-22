@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
+import { searchMessage } from "@/lib/api";
 
 const faqCategories = [
   { label: "Printer", key: "printer", img: "/images/printer.png" },
@@ -12,21 +13,51 @@ const faqCategories = [
   { label: "Proyektor", key: "projector", img: "/images/proyektor.png" },
 ];
 
-const dummyHistory = [
-  { id: 1, pertanyaan: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?", tanggal: "17 Apr 2026" },
-  { id: 2, pertanyaan: "Mengapa tinta tidak keluar padahal masih penuh?", tanggal: "16 Apr 2026" },
-  { id: 3, pertanyaan: "Bagaimana cara menggunakan Epson iPrint?", tanggal: "15 Apr 2026" },
-  { id: 4, pertanyaan: "Error saat instalasi driver Epson L1250", tanggal: "14 Apr 2026" },
-  { id: 5, pertanyaan: "Hasil cetak buram di bagian kiri", tanggal: "13 Apr 2026" },
-];
+type SearchResult = {
+  id: string;
+  title: string;
+  createdAt: string;
+  matchCount: number;
+  lastMatchedMessage?: {
+    id: string;
+    content: string;
+  };
+};
 
 export default function SearchPage() {
   const router = useRouter();
   const [search, setSearch] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const filtered = dummyHistory.filter((h) =>
-    h.pertanyaan.toLowerCase().includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    if (!search.trim()) {
+      setResults([]);
+      setHasSearched(false);
+      return;
+    }
+
+    // Debounce 500ms agar tidak hit API setiap ketukan
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      setHasSearched(true);
+      try {
+        const res = await searchMessage(search.trim());
+        setResults(res.data || []);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [search]);
 
   return (
     <AuthGuard>
@@ -49,33 +80,68 @@ export default function SearchPage() {
               </p>
 
               {/* Search bar */}
-              <div className="mb-6">
+              <div className="mb-6 relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                </div>
                 <input
                   type="text"
                   placeholder="Cari percakapan..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full px-4 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none"
                   style={{ border: "1px solid #B8D0E8", borderRadius: "4px" }}
                 />
+                {loading && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin"
+                      style={{ borderColor: "#003087", borderTopColor: "transparent" }} />
+                  </div>
+                )}
               </div>
 
-              {/* List riwayat */}
+              {/* List hasil pencarian */}
               <div className="flex flex-col gap-2">
-                {filtered.length === 0 ? (
-                  <p className="text-sm text-gray-400">Tidak ada percakapan ditemukan.</p>
+                {!hasSearched ? (
+                  <p className="text-sm text-gray-400">Ketik untuk mulai mencari percakapan.</p>
+                ) : loading ? null : results.length === 0 ? (
+                  <p className="text-sm text-gray-400">Tidak ada percakapan ditemukan untuk "{search}".</p>
                 ) : (
-                  filtered.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => router.push("/chat")}
-                      className="flex items-center justify-between px-4 py-3 text-left hover:bg-epson-light transition-colors w-full"
-                      style={{ border: "1px solid #D4E6F7", borderRadius: "4px", backgroundColor: "white" }}
-                    >
-                      <span className="text-sm text-gray-700 truncate">{item.pertanyaan}</span>
-                      <span className="text-xs text-gray-400 shrink-0 ml-4">{item.tanggal}</span>
-                    </button>
-                  ))
+                  <>
+                    <p className="text-xs text-gray-400 mb-2">
+                      Ditemukan {results.length} percakapan
+                    </p>
+                    {results.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => router.push(`/chat?conversationId=${item.id}`)}
+                        className="flex flex-col px-4 py-3 text-left hover:bg-blue-50 transition-colors w-full"
+                        style={{ border: "1px solid #D4E6F7", borderRadius: "4px", backgroundColor: "white" }}
+                      >
+                        <div className="flex items-center justify-between w-full mb-1">
+                          <span className="text-sm font-medium text-gray-700 truncate">
+                            {item.title || "Percakapan"}
+                          </span>
+                          <span className="text-xs text-gray-400 shrink-0 ml-4">
+                            {new Date(item.createdAt).toLocaleDateString("id-ID", {
+                              day: "numeric", month: "short", year: "numeric"
+                            })}
+                          </span>
+                        </div>
+                        {item.lastMatchedMessage && (
+                          <p className="text-xs text-gray-400 truncate">
+                            {item.lastMatchedMessage.content}
+                          </p>
+                        )}
+                        <span className="text-xs mt-1" style={{ color: "#0070C0" }}>
+                          {item.matchCount} pesan cocok
+                        </span>
+                      </button>
+                    ))}
+                  </>
                 )}
               </div>
             </div>
