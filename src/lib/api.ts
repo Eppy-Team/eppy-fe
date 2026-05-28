@@ -77,7 +77,7 @@ export const getDetailConversation = async (conversationId: string) => {
 export const sendChat = async (conversationId: string, content: string, image?: File) => {
   const formData = new FormData();
   formData.append("content", content);
-  if (image) formData.append("image", image);
+  if (image) formData.append("file", image);
 
   const res = await fetch(`${BASE_URL}/conversations/${conversationId}/messages`, {
     method: "POST",
@@ -248,11 +248,13 @@ export const respondTicket = async (ticketId: string, adminResponse: string) => 
 // ==================== DASHBOARD ====================
 
 // ⚠️ BARU: Get chatbot activity statistics
-export const getDashboardChatbot = async (page = 1, limit = 10, status?: string) => {
+export const getDashboardChatbot = async (page = 1, limit = 10, status?: string, startDate?: string, endDate?: string) => {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
     ...(status ? { status } : {}),
+    ...(startDate ? { startDate } : {}),
+    ...(endDate ? { endDate } : {}),
   });
   const res = await fetch(`${BASE_URL}/dashboard/chatbot?${params}`, {
     method: "GET",

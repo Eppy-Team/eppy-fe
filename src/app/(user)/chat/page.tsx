@@ -9,7 +9,7 @@ import { createConversation, sendChat, createTicket, sendFeedback } from "@/lib/
 import ReactMarkdown from "react-markdown";
 
 type MessageType =
-  | { type: "user"; content: string }
+  | { type: "user"; content: string; imageUrl?: string }
   | { type: "bot"; content: string; messageId?: string; feedbackGiven?: "HELPFUL" | "NOT_HELPFUL" | null }
   | { type: "escalation" }
   | { type: "escalation-confirmed" };
@@ -37,6 +37,7 @@ export default function ChatPage() {
   const [lastUserMessage, setLastUserMessage] = useState<string>("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -60,7 +61,14 @@ export default function ChatPage() {
   const sendMessage = async (text: string, image?: File) => {
     if (!text.trim() && !image) return;
 
-    setMessages((prev) => [...prev, { type: "user", content: text }]);
+    const imageUrl = image ? URL.createObjectURL(image) : undefined;
+
+    setMessages((prev) => [...prev, {
+      type: "user",
+      content: text.trim() || `📎 ${selectedImage?.name || "Gambar"}`,
+      imageUrl,
+    }]);
+
     setInput("");
     clearImage();
     setIsTyping(true);
@@ -159,25 +167,6 @@ export default function ChatPage() {
     }
   };
 
-  const renderMarkdown = (text: string) => {
-    const lines = text.split("\n");
-    return lines.map((line, i) => {
-      // Parse bold: **teks** → <strong>teks</strong>
-      const parts = line.split(/(\*\*[^*]+\*\*)/g);
-      return (
-        <span key={i}>
-          {parts.map((part, j) => {
-            if (part.startsWith("**") && part.endsWith("**")) {
-              return <strong key={j}>{part.slice(2, -2)}</strong>;
-            }
-            return <span key={j}>{part}</span>;
-          })}
-          {i < lines.length - 1 && <br />}
-        </span>
-      );
-    });
-  };
-
   return (
     <AuthGuard>
       <div className="flex flex-col h-screen" style={{ backgroundColor: "#DDEAF6" }}>
@@ -234,10 +223,19 @@ export default function ChatPage() {
                       return (
                         <div key={i} className="flex justify-end">
                           <div
-                            className="px-4 py-2.5 text-sm text-gray-700 max-w-sm"
+                            className="px-4 py-2.5 text-sm text-gray-700 max-w-sm flex flex-col gap-2"
                             style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 2px 12px", backgroundColor: "white" }}
                           >
-                            {renderMarkdown(msg.content)}
+                            {msg.imageUrl && (
+                              <img
+                                src={msg.imageUrl}
+                                alt="uploaded"
+                                className="max-w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                style={{ maxHeight: "200px", objectFit: "cover" }}
+                                onClick={() => setPreviewImage(msg.imageUrl!)}
+                              />
+                            )}
+                            {msg.content && <span>{msg.content}</span>}
                           </div>
                         </div>
                       );
@@ -264,7 +262,6 @@ export default function ChatPage() {
                             </div>
                           </div>
 
-                          {/* Feedback buttons */}
                           {msg.messageId && (
                             <div className="flex flex-col gap-2">
                               {msg.feedbackGiven === null ? (
@@ -362,7 +359,7 @@ export default function ChatPage() {
               )}
             </div>
 
-            {/* Image Preview */}
+            {/* Image Preview sebelum kirim */}
             {imagePreview && (
               <div className="px-4 pt-3 flex items-center gap-2">
                 <div className="relative w-16 h-16">
@@ -456,6 +453,30 @@ export default function ChatPage() {
           </aside>
         </div>
       </div>
+
+      {/* Modal preview gambar */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 cursor-pointer"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-screen p-4">
+            <img
+              src={previewImage}
+              alt="preview"
+              className="max-w-full max-h-screen object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center text-white font-bold"
+              style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
     </AuthGuard>
   );
 }

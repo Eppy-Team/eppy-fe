@@ -22,13 +22,8 @@ const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
     </button>
     <div className="flex items-center gap-8">
       {navItems.map((item) => (
-        <Link
-          key={item.label}
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700"
-        >
+        <Link key={item.label} href={item.url} target="_blank" rel="noopener noreferrer"
+          className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700">
           {item.label}
         </Link>
       ))}
@@ -125,11 +120,33 @@ const statusConfig: Record<string, { bg: string; color: string; dot: string }> =
   "Lanjut ke Tiket": { bg: "#f0f9ff", color: "#0070C0", dot: "#0070C0" },
 };
 
-// Map status API → label tampilan
 const statusApiToLabel: Record<string, string> = {
   "helpful": "Puas",
   "notHelpful": "Tidak Puas",
   "escalated": "Lanjut ke Tiket",
+};
+
+const statusApiMap: Record<string, string | undefined> = {
+  "Status": undefined,
+  "Puas": "helpful",
+  "Tidak Puas": "notHelpful",
+  "Lanjut ke Tiket": "escalated",
+};
+
+const getPeriodeDates = (periode: string) => {
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  if (periode === "Hari Ini") {
+    return { startDate: todayStr, endDate: todayStr };
+  } else if (periode === "Minggu Ini") {
+    const start = new Date(today);
+    start.setDate(today.getDate() - 7);
+    return { startDate: start.toISOString().split("T")[0], endDate: todayStr };
+  } else if (periode === "Bulan Ini") {
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    return { startDate: start.toISOString().split("T")[0], endDate: todayStr };
+  }
+  return { startDate: undefined, endDate: undefined };
 };
 
 type ConversationRow = {
@@ -155,21 +172,19 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
-  const statusApiMap: Record<string, string | undefined> = {
-    "Status": undefined,
-    "Puas": "helpful",
-    "Tidak Puas": "notHelpful",
-    "Lanjut ke Tiket": "escalated",
-  };
-
-  const fetchData = async (currentPage: number, status: string) => {
+  const fetchData = async (currentPage: number, status: string, periode: string) => {
     setLoading(true);
     try {
       const apiStatus = statusApiMap[status];
-      const res = await getDashboardChatbot(currentPage, perPage, apiStatus);
+      const { startDate, endDate } = getPeriodeDates(periode);
+
+      console.log("Fetching with:", { currentPage, apiStatus, startDate, endDate }); // ← tambah ini
+
+      const res = await getDashboardChatbot(currentPage, perPage, apiStatus, startDate, endDate);
       const data = res.data;
 
-      // Rows tabel
+      console.log("Response:", res.data); // ← dan ini
+
       const mapped: ConversationRow[] = (data?.conversations || data?.data || []).map((item: any) => ({
         id: item.id,
         userName: item.userName || item.user?.name || "-",
@@ -182,12 +197,10 @@ export default function DashboardPage() {
       }));
       setRows(mapped);
 
-      // Total & pagination
       const total = data?.total || data?.meta?.total || mapped.length;
       setTotalData(total);
       setTotalPages(Math.ceil(total / perPage));
 
-      // Pie chart dari satisfactionChart
       if (data?.satisfactionChart) {
         setPieData({
           helpful: data.satisfactionChart.helpful || 0,
@@ -202,8 +215,8 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchData(page, statusFilter);
-  }, [page, statusFilter]);
+    fetchData(page, statusFilter, periodeFilter);
+  }, [page, statusFilter, periodeFilter]);
 
   const handleDownload = async () => {
     setDownloading(true);
@@ -242,7 +255,7 @@ export default function DashboardPage() {
 
           <div className="bg-white rounded-xl p-6 mb-4" style={{ border: "1px solid #D4E6F7" }}>
 
-            {/* Pie Chart Kepuasan */}
+            {/* Pie Chart */}
             <div className="flex items-center justify-center gap-10 mb-8">
               <div className="flex flex-col gap-2">
                 {pieKepuasan.map((d) => (
@@ -277,7 +290,6 @@ export default function DashboardPage() {
 
             {/* Tabel */}
             <div className="rounded-xl overflow-hidden" style={{ border: "1px solid #D4E6F7" }}>
-              {/* Header */}
               <div className="grid grid-cols-4 px-6 py-3 bg-white" style={{ borderBottom: "1px solid #D4E6F7" }}>
                 {headers.map((h) => (
                   <div key={h} className="flex items-center justify-center">
@@ -289,10 +301,10 @@ export default function DashboardPage() {
                 ))}
               </div>
 
-              {/* Loading */}
               {loading ? (
                 <div className="flex justify-center items-center py-12">
-                  <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: "#003087", borderTopColor: "transparent" }} />
+                  <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                    style={{ borderColor: "#003087", borderTopColor: "transparent" }} />
                 </div>
               ) : rows.length === 0 ? (
                 <div className="flex justify-center items-center py-12">
@@ -304,7 +316,6 @@ export default function DashboardPage() {
                   return (
                     <div key={row.id} className="grid grid-cols-4 px-6 py-3 items-center hover:bg-blue-50 transition-colors"
                       style={{ borderBottom: "1px solid #F0F7FF" }}>
-                      {/* Pengguna */}
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
                           style={{ backgroundColor: "#D4E6F7", color: "#003087" }}>
@@ -316,7 +327,6 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      {/* Status */}
                       <div className="flex justify-center">
                         <span className="flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full"
                           style={{ backgroundColor: s.bg, color: s.color, border: `1px solid ${s.dot}` }}>
@@ -325,12 +335,10 @@ export default function DashboardPage() {
                         </span>
                       </div>
 
-                      {/* Tanggal */}
                       <div className="flex justify-center">
                         <span className="text-sm text-gray-600">{row.createdAt}</span>
                       </div>
 
-                      {/* Aksi */}
                       <div className="flex justify-center">
                         <button
                           onClick={() => router.push(`/dashboard/conversation/${row.conversationId}`)}
@@ -368,11 +376,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Tombol Download */}
+          {/* Download */}
           <div className="flex justify-end">
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
+            <button onClick={handleDownload} disabled={downloading}
               className="flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
               style={{ backgroundColor: "#003087" }}>
               {downloading ? "Mengunduh..." : "Download"}
