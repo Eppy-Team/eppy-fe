@@ -364,7 +364,11 @@ export default function DashboardPage() {
 
                       <div className="flex justify-center">
                         <button
-                          onClick={() => router.push(`/dashboard/conversation/${row.conversationId}`)}
+                          onClick={() => {
+                            console.log("conversationId:", row.conversationId);
+                            console.log("ROW:", row);
+                            router.push(`/dashboard/conversation/${row.conversationId}`);
+                          }}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white rounded-full hover:opacity-90"
                           style={{ backgroundColor: "#003087" }}>
                           Lihat Chatbot

@@ -25,6 +25,7 @@ export default function LoginPage() {
       setToken(data.data.accessToken);
       localStorage.setItem("eppy_role", data.data.user.role);
       localStorage.setItem("eppy_name", data.data.user.name);
+      localStorage.setItem("eppy_email", data.data.user.email);
       showToast("Login berhasil! Mengalihkan...", "success");
       setTimeout(() => {
         const role = data.data.user.role;
