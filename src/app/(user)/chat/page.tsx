@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
-import { createConversation, sendChat, createTicket, sendFeedback } from "@/lib/api";
+import { createConversation, sendChat, createTicket, sendFeedback, getDetailConversation } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 type MessageType =
   | { type: "user"; content: string; imageUrl?: string }
@@ -26,7 +28,7 @@ const faqCategories = [
   { label: "Proyektor", key: "projector", img: "/images/proyektor.png" },
 ];
 
-export default function ChatPage() {
+function ChatPageInner() {
   const router = useRouter();
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
@@ -40,6 +42,29 @@ export default function ChatPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const convId = searchParams.get("conversationId");
+    if (!convId) return;
+    const loadConversation = async () => {
+      try {
+        const res = await getDetailConversation(convId);
+        const msgs = (res.data || []).map((m: any) => ({
+          type: m.role === "USER" ? "user" : "bot",
+          content: m.content,
+          imageUrl: m.imageUrl || undefined,
+          messageId: undefined,
+        }));
+        setActiveConversationId(convId);
+        setMessages(msgs);
+      } catch {
+        // abaikan
+      }
+    };
+    loadConversation();
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -151,13 +176,29 @@ export default function ChatPage() {
         await createTicket(
           lastUserMessage.slice(0, 100),
           lastUserMessage,
-          "General",
           activeConversationId!,
           lastMessageId!
         );
-        setTimeout(() => router.push("/tickets/new"), 1000);
-      } catch {
-        setTimeout(() => router.push("/tickets/new"), 1000);
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "bot",
+            content: "✅ Tiket berhasil dibuat! Tim kami akan segera menghubungi kamu.",
+            messageId: undefined,
+            feedbackGiven: null,
+          },
+        ]);
+        setTimeout(() => router.push("/tickets"), 1500);
+      } catch (err: any) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "bot",
+            content: err.message || "Gagal membuat tiket. Silakan coba lagi.",
+            messageId: undefined,
+            feedbackGiven: null,
+          },
+        ]);
       }
     } else {
       setMessages((prev) => [
@@ -478,5 +519,13 @@ export default function ChatPage() {
         </div>
       )}
     </AuthGuard>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense>
+      <ChatPageInner />
+    </Suspense>
   );
 }

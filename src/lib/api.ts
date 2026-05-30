@@ -167,14 +167,13 @@ export const deleteKnowledge = async (knowledgeId: string) => {
 export const createTicket = async (
   title: string,
   description: string,
-  category: string,
   conversationId: string,
   messageId: string
 ) => {
   const res = await fetch(`${BASE_URL}/tickets/`, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify({ title, description, category, conversationId, messageId }),
+    body: JSON.stringify({ title, description, conversationId, messageId }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal membuat tiket");
@@ -202,8 +201,14 @@ export const getDetailTicket = async (ticketId: string) => {
 };
 
 // ==================== TICKET (ADMIN) ====================
-export const getAllTicketsAdmin = async (page = 1, limit = 10) => {
-  const res = await fetch(`${BASE_URL}/tickets/admin/all?page=${page}&limit=${limit}`, {
+// SESUDAH
+export const getAllTicketsAdmin = async (page = 1, limit = 10, status?: string) => {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+  if (status) params.append("status", status);
+  const res = await fetch(`${BASE_URL}/tickets/admin/all?${params}`, {
     method: "GET",
     headers: authHeaders(),
   });
@@ -238,7 +243,7 @@ export const respondTicket = async (ticketId: string, adminResponse: string) => 
   const res = await fetch(`${BASE_URL}/tickets/admin/${ticketId}/respond`, {
     method: "PATCH",
     headers: authHeaders(),
-    body: JSON.stringify({ response: adminResponse }),
+    body: JSON.stringify({ adminResponse }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Gagal mengirim respons tiket");

@@ -109,7 +109,7 @@ export default function LoginPage() {
             <div className="flex justify-end -mt-2">
               <button
                 type="button"
-                onClick={() => setShowForgot(true)}
+                onClick={() => router.push("/forgot-password")}
                 className="text-xs hover:opacity-80 transition-opacity"
                 style={{ color: "#0070C0" }}
               >

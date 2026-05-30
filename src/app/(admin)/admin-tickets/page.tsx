@@ -25,13 +25,8 @@ const AdminNavbar = ({ router }: { router: ReturnType<typeof useRouter> }) => (
     </button>
     <div className="flex items-center gap-8">
       {navItems.map((item) => (
-        <Link
-          key={item.label}
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700"
-        >
+        <Link key={item.label} href={item.url} target="_blank" rel="noopener noreferrer"
+          className="text-sm text-gray-700 font-medium transition-colors hover:text-blue-700">
           {item.label}
         </Link>
       ))}
@@ -69,6 +64,35 @@ const AdminSidebar = ({ active, router }: { active: string; router: ReturnType<t
   );
 };
 
+const CustomDropdown = ({ value, options, onChange }: { value: string; options: { label: string; value: string }[]; onChange: (v: string) => void }) => {
+  const [open, setOpen] = useState(false);
+  const selectedLabel = options.find((o) => o.value === value)?.label ?? value;
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)}
+        className="flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white min-w-36"
+        style={{ backgroundColor: "#003087", borderRadius: "8px" }}>
+        {selectedLabel}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full mt-1 w-full bg-white z-10 overflow-hidden"
+          style={{ border: "1px solid #D4E6F7", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+          {options.map((opt) => (
+            <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false); }}
+              className="w-full text-center px-4 py-2 text-sm hover:bg-blue-50 transition-colors"
+              style={{ color: value === opt.value ? "#003087" : "#374151", fontWeight: value === opt.value ? "600" : "400" }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 type Ticket = {
   id: string;
   title: string;
@@ -89,31 +113,73 @@ const getStatusStyle = (status: string) => {
   }
 };
 
+const STATUS_OPTIONS = [
+  { label: "Semua Status", value: "" },
+  { label: "Baru", value: "OPEN" },
+  { label: "Proses", value: "ON_PROGRESS" },
+  { label: "Selesai", value: "RESOLVED" },
+  { label: "Ditutup", value: "CLOSED" },
+];
+
+const PERIOD_OPTIONS = [
+  { label: "Semua Periode", value: "" },
+  { label: "Hari Ini", value: "today" },
+  { label: "Minggu Ini", value: "week" },
+  { label: "Bulan Ini", value: "month" },
+];
+
 export default function AdminTicketsPage() {
   const router = useRouter();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalData, setTotalData] = useState(0);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [response, setResponse] = useState("");
   const [saving, setSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [periodeFilter, setPeriodeFilter] = useState("");
   const { toast, showToast, hideToast } = useToast();
 
-  const fetchTickets = async (p = 1) => {
+  const perPage = 10;
+
+  const fetchTickets = async (p = 1, status = "", periode = "") => {
     setLoading(true);
     try {
-      const res = await getAllTicketsAdmin(p, 10);
-      setTickets(res.data || []);
-      if (res.meta) setTotalPages(res.meta.totalPages || 1);
+      const res = await getAllTicketsAdmin(p, perPage, status || undefined);
+      let data: Ticket[] = res.data || [];
+
+      if (periode) {
+        const now = new Date();
+        data = data.filter((t) => {
+          const created = new Date(t.createdAt);
+          if (periode === "today") return created.toDateString() === now.toDateString();
+          if (periode === "week") {
+            const weekAgo = new Date(now);
+            weekAgo.setDate(now.getDate() - 7);
+            return created >= weekAgo;
+          }
+          if (periode === "month") return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+          return true;
+        });
+      }
+
+      setTickets(data);
+      const total = res.meta?.total || data.length;
+      const tPages = res.meta?.totalPages || Math.ceil(total / perPage) || 1;
+      setTotalData(total);
+      setTotalPages(tPages);
     } catch {
-      // abaikan error
+      showToast("Gagal memuat tiket.", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchTickets(page); }, [page]);
+  useEffect(() => {
+    fetchTickets(page, statusFilter, periodeFilter);
+  }, [page, statusFilter, periodeFilter]);
 
   const handleUpdateStatus = async (ticketId: string, status: string) => {
     try {
@@ -135,17 +201,12 @@ export default function AdminTicketsPage() {
       setTickets((prev) => prev.map((t) => t.id === selectedTicket.id ? { ...t, adminResponse: response, status: "RESOLVED" } : t));
       setResponse("");
       showToast("Respons berhasil dikirim.", "success");
-    } catch {
-      showToast("Gagal mengirim respons.", "error");
+    } catch (err: any) {
+      showToast(err.message || "Gagal mengirim respons.", "error");
     } finally {
       setSaving(false);
     }
   };
-
-  const totalTickets = tickets.length;
-  const newTickets = tickets.filter((t) => t.status === "OPEN").length;
-  const activeTickets = tickets.filter((t) => t.status === "ON_PROGRESS").length;
-  const resolvedTickets = tickets.filter((t) => t.status === "RESOLVED" || t.status === "CLOSED").length;
 
   return (
     <AuthGuard>
@@ -161,10 +222,10 @@ export default function AdminTicketsPage() {
                 {/* Stat Cards */}
                 <div className="grid grid-cols-4 gap-3 mb-6">
                   {[
-                    { label: "Total Tiket", value: totalTickets },
-                    { label: "Tiket Baru", value: newTickets },
-                    { label: "Tiket Aktif", value: activeTickets },
-                    { label: "Tiket Selesai", value: resolvedTickets },
+                    { label: "Total Tiket", value: totalData },
+                    { label: "Tiket Baru", value: tickets.filter((t) => t.status === "OPEN").length },
+                    { label: "Tiket Aktif", value: tickets.filter((t) => t.status === "ON_PROGRESS").length },
+                    { label: "Tiket Selesai", value: tickets.filter((t) => t.status === "RESOLVED" || t.status === "CLOSED").length },
                   ].map((s) => (
                     <div key={s.label} className="rounded-lg p-4 text-center" style={{ border: "1px solid #D4E6F7" }}>
                       <p className="text-xs text-gray-500 mb-2">{s.label}</p>
@@ -173,11 +234,34 @@ export default function AdminTicketsPage() {
                   ))}
                 </div>
 
+                {/* Filter */}
+                <div className="flex items-center gap-6 mb-5">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">Periode</span>
+                    <CustomDropdown
+                      value={periodeFilter}
+                      options={PERIOD_OPTIONS}
+                      onChange={(v) => { setPeriodeFilter(v); setPage(1); }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-gray-700">Status</span>
+                    <CustomDropdown
+                      value={statusFilter}
+                      options={STATUS_OPTIONS}
+                      onChange={(v) => { setStatusFilter(v); setPage(1); }}
+                    />
+                  </div>
+                </div>
+
                 {/* Tabel */}
                 {loading ? (
-                  <p className="text-sm text-gray-500 text-center py-8">Memuat tiket...</p>
+                  <div className="flex justify-center items-center py-12">
+                    <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                      style={{ borderColor: "#003087", borderTopColor: "transparent" }} />
+                  </div>
                 ) : tickets.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-8">Belum ada tiket.</p>
+                  <p className="text-sm text-gray-500 text-center py-8">Tidak ada tiket ditemukan.</p>
                 ) : (
                   <table className="w-full text-sm">
                     <thead>
@@ -224,12 +308,15 @@ export default function AdminTicketsPage() {
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between mt-4 pt-4" style={{ borderTop: "1px solid #D4E6F7" }}>
-                  <span className="text-sm text-gray-500">Halaman {page} dari {totalPages}</span>
-                  <div className="flex gap-2">
+                  <span className="text-sm text-gray-500">
+                    Menampilkan {totalData === 0 ? 0 : (page - 1) * perPage + 1}–{Math.min(page * perPage, totalData)} dari {totalData} tiket
+                  </span>
+                  <div className="flex gap-2 items-center">
                     <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
                       className="px-4 py-1.5 text-sm rounded border transition-colors disabled:opacity-40"
                       style={{ borderColor: "#D4E6F7" }}>Prev</button>
-                    <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                    <span className="text-sm text-gray-600">{page} / {totalPages}</span>
+                    <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
                       className="px-4 py-1.5 text-sm rounded border transition-colors disabled:opacity-40"
                       style={{ borderColor: "#D4E6F7" }}>Next</button>
                   </div>
@@ -278,8 +365,7 @@ export default function AdminTicketsPage() {
                   )}
                 </div>
 
-                {/* Form Respons */}
-                {selectedTicket.status !== "CLOSED" && (
+                {selectedTicket.status !== "CLOSED" && selectedTicket.status !== "RESOLVED" && (
                   <div className="flex flex-col gap-3">
                     <label className="text-sm font-semibold text-gray-700">Kirim Respons</label>
                     <textarea

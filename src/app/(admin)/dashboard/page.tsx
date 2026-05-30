@@ -68,7 +68,8 @@ const CustomDropdown = ({ value, options, onChange }: { value: string; options: 
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)}
+      <button
+        onClick={() => setOpen((o) => !o)}
         className="flex items-center justify-center gap-2 px-5 py-2 text-sm font-medium text-white min-w-36"
         style={{ backgroundColor: "#003087", borderRadius: "8px" }}>
         {value}
@@ -77,16 +78,22 @@ const CustomDropdown = ({ value, options, onChange }: { value: string; options: 
         </svg>
       </button>
       {open && (
-        <div className="absolute top-full mt-1 w-full bg-white z-10 overflow-hidden"
-          style={{ border: "1px solid #D4E6F7", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-          {options.map((opt) => (
-            <button key={opt} onClick={() => { onChange(opt); setOpen(false); }}
-              className="w-full text-center px-4 py-2 text-sm hover:bg-blue-50 transition-colors"
-              style={{ color: value === opt ? "#003087" : "#374151", fontWeight: value === opt ? "600" : "400" }}>
-              {opt}
-            </button>
-          ))}
-        </div>
+        <>
+          {/* overlay untuk close saat klik luar */}
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute top-full mt-1 w-full bg-white z-20 overflow-hidden"
+            style={{ border: "1px solid #D4E6F7", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", minWidth: "140px" }}>
+            {options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => { onChange(opt); setOpen(false); }}
+                className="w-full text-center px-4 py-2 text-sm hover:bg-blue-50 transition-colors"
+                style={{ color: value === opt ? "#003087" : "#374151", fontWeight: value === opt ? "600" : "400" }}>
+                {opt}
+              </button>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -121,30 +128,35 @@ const statusConfig: Record<string, { bg: string; color: string; dot: string }> =
 };
 
 const statusApiToLabel: Record<string, string> = {
+  "HELPFUL": "Puas",
+  "NOT_HELPFUL": "Tidak Puas",
   "helpful": "Puas",
   "notHelpful": "Tidak Puas",
-  "escalated": "Lanjut ke Tiket",
 };
 
+// SESUDAH
 const statusApiMap: Record<string, string | undefined> = {
   "Status": undefined,
-  "Puas": "helpful",
-  "Tidak Puas": "notHelpful",
-  "Lanjut ke Tiket": "escalated",
+  "Puas": "HELPFUL",
+  "Tidak Puas": "NOT_HELPFUL",
 };
 
 const getPeriodeDates = (periode: string) => {
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  // Gunakan waktu lokal, bukan UTC
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const todayStr = toStr(today);
+
   if (periode === "Hari Ini") {
     return { startDate: todayStr, endDate: todayStr };
   } else if (periode === "Minggu Ini") {
     const start = new Date(today);
     start.setDate(today.getDate() - 7);
-    return { startDate: start.toISOString().split("T")[0], endDate: todayStr };
+    return { startDate: toStr(start), endDate: todayStr };
   } else if (periode === "Bulan Ini") {
     const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    return { startDate: start.toISOString().split("T")[0], endDate: todayStr };
+    return { startDate: toStr(start), endDate: todayStr };
   }
   return { startDate: undefined, endDate: undefined };
 };
@@ -156,6 +168,7 @@ type ConversationRow = {
   status: string;
   createdAt: string;
   conversationId?: string;
+  rawDate?: string;
 };
 
 export default function DashboardPage() {
@@ -178,28 +191,38 @@ export default function DashboardPage() {
       const apiStatus = statusApiMap[status];
       const { startDate, endDate } = getPeriodeDates(periode);
 
-      console.log("Fetching with:", { currentPage, apiStatus, startDate, endDate }); // ← tambah ini
-
       const res = await getDashboardChatbot(currentPage, perPage, apiStatus, startDate, endDate);
       const data = res.data;
 
-      console.log("Response:", res.data); // ← dan ini
+      const rawList = data?.conversations || data?.data || [];
 
-      const mapped: ConversationRow[] = (data?.conversations || data?.data || []).map((item: any) => ({
+      const currentStatusLabel =
+        apiStatus === "HELPFUL" ? "Puas" :
+          apiStatus === "NOT_HELPFUL" ? "Tidak Puas" :
+            "Puas";
+
+      let mapped: ConversationRow[] = rawList.map((item: any) => ({
         id: item.id,
-        userName: item.userName || item.user?.name || "-",
-        userEmail: item.userEmail || item.user?.email || "-",
-        status: statusApiToLabel[item.status] || item.status || "Puas",
+        userName: item.user?.name || "-",
+        userEmail: item.user?.email || "-",
+        status: currentStatusLabel,
         createdAt: item.createdAt
           ? new Date(item.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
           : "-",
-        conversationId: item.conversationId || item.id,
+        conversationId: item.id,
+        rawDate: item.createdAt ? item.createdAt.split("T")[0] : "",
       }));
-      setRows(mapped);
 
-      const total = data?.total || data?.meta?.total || mapped.length;
-      setTotalData(total);
-      setTotalPages(Math.ceil(total / perPage));
+      // Filter periode di frontend
+      if (startDate && endDate) {
+        mapped = mapped.filter((item: any) => {
+          return item.rawDate >= startDate && item.rawDate <= endDate;
+        });
+      }
+
+      setRows(mapped);
+      setTotalData(mapped.length);
+      setTotalPages(Math.ceil(mapped.length / perPage) || 1);
 
       if (data?.satisfactionChart) {
         setPieData({
@@ -282,7 +305,7 @@ export default function DashboardPage() {
                 <span className="text-sm font-medium text-gray-700">Status</span>
                 <CustomDropdown
                   value={statusFilter}
-                  options={["Status", "Puas", "Tidak Puas", "Lanjut ke Tiket"]}
+                  options={["Status", "Puas", "Tidak Puas"]}
                   onChange={(v) => { setStatusFilter(v); setPage(1); }}
                 />
               </div>
