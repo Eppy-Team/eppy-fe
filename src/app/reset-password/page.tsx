@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { resetPassword } from "@/lib/api";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
+import AuthNavbar from "@/components/layout/AuthNavbar";
 
 function ResetPasswordForm() {
     const router = useRouter();
@@ -49,15 +50,7 @@ function ResetPasswordForm() {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#DDEAF6" }}>
-            <nav
-                className="w-full bg-white border-b px-8 py-3 flex items-center sticky top-0 z-50"
-                style={{ borderColor: "#D4E6F7" }}
-            >
-                <button onClick={() => router.push("/login")} className="flex items-center gap-3">
-                    <img src="/images/eppy-logo.png" alt="Eppy" className="w-10 h-10 object-contain" />
-                    <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>Eppy</span>
-                </button>
-            </nav>
+            <AuthNavbar />
 
             {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 

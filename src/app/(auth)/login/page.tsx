@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/layout/Navbar";
+import AuthNavbar from "@/components/layout/AuthNavbar";
 import { login, setToken, forgotPassword } from "@/lib/api";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
@@ -59,7 +59,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#DDEAF6" }}>
-      <Navbar />
+      <AuthNavbar />
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 

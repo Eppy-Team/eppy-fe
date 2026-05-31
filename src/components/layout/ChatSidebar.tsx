@@ -54,6 +54,21 @@ export default function ChatSidebar({ activeConversationId = null, onSelectConve
   const router = useRouter();
   const pathname = usePathname();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [userName, setUserName] = useState("");
+  const [showProfile, setShowProfile] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const name = localStorage.getItem("eppy_name");
+    const email = localStorage.getItem("eppy_email");
+    if (name) setUserName(name);
+    if (email) setUserEmail(email);
+  }, []);
+
+  useEffect(() => {
+    const name = localStorage.getItem("eppy_name");
+    if (name) setUserName(name);
+  }, []);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -179,6 +194,63 @@ export default function ChatSidebar({ activeConversationId = null, onSelectConve
           })()
         )}
       </div>
-    </aside>
+
+      {/* User di bawah */}
+      <div className="px-4 py-4 border-t relative" style={{ borderColor: "#D4E6F7" }}>
+        <button
+          onClick={() => setShowProfile((v) => !v)}
+          className="flex items-center gap-3 w-full hover:opacity-80 transition-opacity"
+        >
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
+            style={{ backgroundColor: "#003087" }}
+          >
+            {userName ? userName[0].toUpperCase() : "U"}
+          </div>
+          <span className="text-sm font-semibold truncate" style={{ color: "#003087" }}>
+            {userName || "Pengguna"}
+          </span>
+        </button>
+
+        {/* Popup profil */}
+        {showProfile && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setShowProfile(false)} />
+            <div
+              className="absolute bottom-16 left-2 right-2 z-20 p-4 flex flex-col items-center gap-3"
+              style={{ backgroundColor: "#DDEAF6", borderRadius: "12px", border: "1px solid #003087", boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }}
+            >
+              <div className="flex flex-col items-center gap-0.5">
+                <p className="text-sm font-bold" style={{ color: "#003087" }}>{userName || "Pengguna"}</p>
+                <p className="text-xs text-gray-500">{userEmail || ""}</p>
+              </div>
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={() => { setShowProfile(false); router.push("/forgot-password"); }}
+                  className="flex-1 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity whitespace-nowrap"
+                  style={{ backgroundColor: "#0070C0", borderRadius: "8px" }}
+                >
+                  Ubah Kata Sandi
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem("eppy_token");
+                    localStorage.removeItem("eppy_role");
+                    localStorage.removeItem("eppy_name");
+                    localStorage.removeItem("eppy_email");
+                    setShowProfile(false);
+                    router.push("/login");
+                  }}
+                  className="flex-1 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: "#0070C0", borderRadius: "8px" }}
+                >
+                  Keluar
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </aside >
   );
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { forgotPassword } from "@/lib/api";
 import Toast from "@/components/ui/Toast";
 import { useToast } from "@/hooks/useToast";
-import Link from "next/link";
+import AuthNavbar from "@/components/layout/AuthNavbar";
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
@@ -29,15 +29,7 @@ export default function ForgotPasswordPage() {
 
     return (
         <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#DDEAF6" }}>
-            <nav
-                className="w-full bg-white border-b px-8 py-3 flex items-center sticky top-0 z-50"
-                style={{ borderColor: "#D4E6F7" }}
-            >
-                <button onClick={() => router.push("/login")} className="flex items-center gap-3">
-                    <img src="/images/eppy-logo.png" alt="Eppy" className="w-10 h-10 object-contain" />
-                    <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>Eppy</span>
-                </button>
-            </nav>
+            <AuthNavbar />
 
             {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
 
@@ -83,13 +75,13 @@ export default function ForgotPasswordPage() {
                                 </div>
 
                                 <div className="flex justify-center">
-                                    <Link
-                                        href="/login"
+                                    <button
+                                        onClick={() => router.push("/login")}
                                         className="text-sm hover:opacity-80 transition-opacity"
                                         style={{ color: "#0070C0" }}
                                     >
                                         ← Kembali ke halaman masuk
-                                    </Link>
+                                    </button>
                                 </div>
                             </form>
                         </>
