@@ -202,10 +202,13 @@ export default function ChatSidebar({ activeConversationId = null, onSelectConve
           className="flex items-center gap-3 w-full hover:opacity-80 transition-opacity"
         >
           <div
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
+            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
             style={{ backgroundColor: "#003087" }}
           >
-            {userName ? userName[0].toUpperCase() : "U"}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
           </div>
           <span className="text-sm font-semibold truncate" style={{ color: "#003087" }}>
             {userName || "Pengguna"}

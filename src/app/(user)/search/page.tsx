@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Navbar from "@/components/layout/Navbar";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
 import { searchMessage } from "@/lib/api";
@@ -39,7 +38,6 @@ export default function SearchPage() {
       return;
     }
 
-    // Debounce 500ms agar tidak hit API setiap ketukan
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
@@ -61,15 +59,13 @@ export default function SearchPage() {
 
   return (
     <AuthGuard>
-      <div className="flex flex-col h-screen" style={{ backgroundColor: "#DDEAF6" }}>
-        <Navbar />
+      <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
+        <ChatSidebar />
 
         <div className="flex flex-1 overflow-hidden p-4 gap-3">
-          <ChatSidebar />
-
           <main
             className="flex-1 flex flex-col overflow-hidden bg-white"
-            style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
+            style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}
           >
             <div className="flex-1 overflow-y-auto p-8">
               <h2 className="text-3xl font-bold mb-1" style={{ color: "#003087" }}>
@@ -93,7 +89,7 @@ export default function SearchPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-10 pr-4 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none"
-                  style={{ border: "1px solid #B8D0E8", borderRadius: "4px" }}
+                  style={{ border: "1px solid #B8D0E8", borderRadius: "8px" }}
                 />
                 {loading && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -103,7 +99,7 @@ export default function SearchPage() {
                 )}
               </div>
 
-              {/* List hasil pencarian */}
+              {/* Hasil pencarian */}
               <div className="flex flex-col gap-2">
                 {!hasSearched ? (
                   <p className="text-sm text-gray-400">Ketik untuk mulai mencari percakapan.</p>
@@ -119,10 +115,10 @@ export default function SearchPage() {
                         key={item.id}
                         onClick={() => router.push(`/chat?conversationId=${item.id}`)}
                         className="flex flex-col px-4 py-3 text-left hover:bg-blue-50 transition-colors w-full"
-                        style={{ border: "1px solid #D4E6F7", borderRadius: "4px", backgroundColor: "white" }}
+                        style={{ border: "1px solid #D4E6F7", borderRadius: "8px", backgroundColor: "white" }}
                       >
                         <div className="flex items-center justify-between w-full mb-1">
-                          <span className="text-sm font-medium text-gray-700 truncate">
+                          <span className="text-sm font-medium truncate" style={{ color: "#003087" }}>
                             {item.title || "Percakapan"}
                           </span>
                           <span className="text-xs text-gray-400 shrink-0 ml-4">
@@ -150,19 +146,19 @@ export default function SearchPage() {
           {/* Panel FAQ Kanan */}
           <aside
             className="w-56 bg-white shrink-0 p-4"
-            style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
+            style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}
           >
-            <h3 className="font-bold text-gray-800 text-lg mb-4">FAQ</h3>
+            <h3 className="font-bold text-lg mb-4" style={{ color: "#003087" }}>FAQ</h3>
             <div className="flex flex-col gap-3">
               {faqCategories.map((cat, i) => (
                 <button
                   key={i}
                   onClick={() => router.push(`/faq/${cat.key}`)}
-                  className="flex items-center gap-3 p-3 hover:bg-epson-light transition-all text-left w-full"
-                  style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
+                  className="flex items-center gap-3 p-3 hover:bg-blue-50 transition-all text-left w-full"
+                  style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}
                 >
                   <img src={cat.img} alt={cat.label} className="w-10 h-10 object-contain" />
-                  <span className="text-sm font-medium text-gray-700">{cat.label}</span>
+                  <span className="text-sm font-medium" style={{ color: "#003087" }}>{cat.label}</span>
                 </button>
               ))}
             </div>

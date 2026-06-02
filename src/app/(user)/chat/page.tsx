@@ -393,7 +393,7 @@ function ChatPageInner() {
           {/* FAQ kanan */}
           <aside className="w-56 bg-white shrink-0 p-4"
             style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}>
-            <h3 className="font-bold text-gray-800 text-lg mb-4">FAQ</h3>
+            <h3 className="font-bold text-lg mb-4" style={{ color: "#003087" }}>FAQ</h3>
             <div className="flex flex-col gap-3">
               {faqCategories.map((cat, i) => (
                 <button key={i} onClick={() => router.push(`/faq/${cat.key}`)}

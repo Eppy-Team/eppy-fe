@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import ChatSidebar from "@/components/layout/ChatSidebar";
+import FaqSidebar from "@/components/layout/FaqSidebar";
 import AuthGuard from "@/components/AuthGuard";
 
 const faqData: Record<string, { title: string; items: { q: string; a: string }[] }> = {
@@ -12,16 +12,21 @@ const faqData: Record<string, { title: string; items: { q: string; a: string }[]
       {
         q: "Bagaimana cara menghubungkan printer Epson ke Wi-Fi?",
         a: `Untuk menghubungkan printer Epson ke jaringan Wi-Fi, ikuti langkah-langkah berikut:
-1. Nyalakan printer Epson. Pastikan printer dalam keadaan hidup dan tidak sedang mencetak.
-2. Tekan tombol Wi-Fi pada printer. Tahan hingga lampu indikator Wi-Fi mulai berkedip.
+1. Nyalakan printer Epson.
+   Pastikan printer dalam keadaan hidup dan tidak sedang mencetak.
+2. Tekan tombol Wi-Fi pada printer.
+   Tahan hingga lampu indikator Wi-Fi mulai berkedip. Ini menandakan printer siap disambungkan.
 3. Gunakan WPS (jika router mendukung):
-   • Tekan tombol WPS pada router dalam waktu 2 menit.
-   • Tunggu hingga lampu Wi-Fi pada printer menyala stabil.
+   • Tekan tombol WPS pada router dalam waktu 2 menit setelah menekan tombol Wi-Fi di printer.
+   • Tunggu hingga lampu Wi-Fi pada printer berhenti berkedip dan menyala stabil.
+   • Artinya printer sudah berhasil terhubung ke jaringan Wi-Fi.
 4. Jika tanpa WPS (manual setup):
+   • Hubungkan laptop/PC ke jaringan Wi-Fi yang sama dengan printer.
    • Jalankan Epson Printer Setup Utility di komputer.
    • Pilih Wireless Connection → Set up printer for the first time.
-   • Masukkan SSID dan password Wi-Fi.
-5. Cetak Network Status Sheet untuk memastikan koneksi aktif.`,
+   • Ikuti petunjuk di layar untuk memasukkan SSID (nama Wi-Fi) dan password.
+5. Konfirmasi koneksi.
+   Setelah berhasil, coba cetak Network Status Sheet dari menu printer untuk memastikan koneksi sudah aktif.`,
       },
       {
         q: "Mengapa tinta tidak keluar padahal kartrid masih penuh?",
@@ -176,101 +181,178 @@ export default function FAQCategoryPage() {
   const params = useParams();
   const category = params.category as string;
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [search, setSearch] = useState("");
+  const [userName, setUserName] = useState("");
+  const [showProfile, setShowProfile] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const name = localStorage.getItem("eppy_name");
+    const email = localStorage.getItem("eppy_email");
+    if (name) setUserName(name);
+    if (email) setUserEmail(email);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("eppy_token");
+    localStorage.removeItem("eppy_role");
+    localStorage.removeItem("eppy_name");
+    localStorage.removeItem("eppy_email");
+    router.push("/login");
+  };
 
   const data = faqData[category] || faqData["printer"];
 
   return (
     <AuthGuard>
-      <div className="flex flex-col h-screen" style={{ backgroundColor: "#DDEAF6" }}>
-        {/* Navbar dengan Search */}
-        <nav className="w-full bg-white border-b px-8 py-3 flex items-center justify-between sticky top-0 z-50"
-          style={{ borderColor: "#D4E6F7" }}>
-          <button onClick={() => router.push("/chat")} className="flex items-center">
-            <span className="font-bold text-2xl tracking-tight" style={{ color: "#003087" }}>EPSON</span>
-          </button>
-          <div className="flex items-center gap-8">
-            {["Produk", "Solusi", "Tempat Pembelian", "Dukungan", "Keberlanjutan"].map((item) => (
-              <button key={item} className="text-sm text-gray-700 font-medium hover:text-epson-navy transition-colors">
-                {item}
-              </button>
-            ))}
-          </div>
-          {/* Search bar */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg"
-            style={{ border: "1px solid #D4E6F7", backgroundColor: "white", minWidth: "160px" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Cari"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="text-sm text-gray-600 outline-none bg-transparent w-full placeholder:text-gray-400"
-            />
-          </div>
-        </nav>
+      <div className="flex flex-col h-screen" style={{ backgroundColor: 'var(--epson-bg)' }}>
+        <div className="flex flex-1 overflow-hidden p-4 gap-3" style={{ backgroundColor: "#F0F7FF" }}>
 
-        <div className="flex flex-1 overflow-hidden p-4 gap-3">
-          {/* Sidebar Kiri */}
-          <ChatSidebar />
+          {/* Sidebar kiri — tanpa profile di bawah */}
+          <FaqSidebar />
 
-          {/* Konten Tengah */}
-          <main
-            className="flex-1 flex flex-col overflow-hidden bg-white"
-            style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
-          >
-            <div className="flex-1 overflow-y-auto p-8">
-              <h2 className="text-3xl font-bold mb-6" style={{ color: "#003087" }}>
-                {data.title}
-              </h2>
+          {/* Kolom tengah */}
+          <div className="flex-1 flex flex-col overflow-hidden gap-3">
 
-              <div className="flex flex-col gap-3">
-                {data.items.map((item, i) => {
-                  const isOpen = openIndex === i;
-                  return (
-                    <div key={i} style={{ border: "1px solid #D4E6F7", borderRadius: "8px", overflow: "hidden" }}>
-                      {/* Header Accordion */}
-                      <button
-                        onClick={() => setOpenIndex(isOpen ? null : i)}
-                        className="w-full flex items-center justify-between px-5 py-4 text-left transition-colors"
-                        style={{ backgroundColor: isOpen ? "#DDEAF6" : "white" }}
-                      >
-                        <span className="text-sm font-medium" style={{ color: isOpen ? "#003087" : "#374151" }}>
-                          {item.q}
-                        </span>
-                        <svg
-                          width="18" height="18" viewBox="0 0 24 24" fill="none"
-                          stroke={isOpen ? "#003087" : "#6b7280"} strokeWidth="2"
-                          style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}
+            {/* Header: nama user + icon profile */}
+            <div
+              className="bg-white shrink-0 px-6 py-3 flex items-center justify-end"
+              style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
+            >
+              <div className="relative">
+                <button
+                  onClick={() => setShowProfile((v) => !v)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
+                  <span className="text-sm font-semibold" style={{ color: "#003087" }}>
+                    {userName || "Pengguna"}
+                  </span>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: "#003087" }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                </button>
+
+                {/* Dropdown profile */}
+                {showProfile && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setShowProfile(false)} />
+                    <div
+                      className="absolute right-0 mt-3 w-64 z-20 p-4 flex flex-col gap-3"
+                      style={{
+                        backgroundColor: "#DDEAF6",
+                        borderRadius: "12px",
+                        border: "1px solid #003087",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-0.5">
+                        <p className="text-sm font-bold" style={{ color: "#003087" }}>
+                          {userName || "Pengguna"}
+                        </p>
+                        <p className="text-xs text-gray-500">{userEmail || ""}</p>
+                      </div>
+                      <div className="flex gap-2 w-full">
+                        <button
+                          onClick={() => { setShowProfile(false); router.push("/forgot-password"); }}
+                          className="flex-1 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity whitespace-nowrap"
+                          style={{ backgroundColor: "#0070C0", borderRadius: "8px" }}
                         >
-                          <polyline points="6 9 12 15 18 9" />
-                        </svg>
-                      </button>
-
-                      {/* Konten Accordion */}
-                      {isOpen && (
-                        <div
-                          className="px-5 py-4 text-sm text-gray-700 whitespace-pre-line"
-                          style={{ borderTop: "1px solid #D4E6F7", backgroundColor: "white" }}
+                          Ubah Kata Sandi
+                        </button>
+                        <button
+                          onClick={handleLogout}
+                          className="flex-1 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity"
+                          style={{ backgroundColor: "#0070C0", borderRadius: "8px" }}
                         >
-                          {item.a}
-                        </div>
-                      )}
+                          Keluar
+                        </button>
+                      </div>
                     </div>
-                  );
-                })}
+                  </>
+                )}
               </div>
             </div>
-          </main>
 
-          {/* Panel FAQ Kanan */}
+            {/* Konten FAQ */}
+            <main
+              className="flex-1 flex flex-col overflow-hidden bg-white"
+              style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
+            >
+              <div className="flex-1 overflow-y-auto p-8">
+                <h2 className="text-3xl font-bold mb-6" style={{ color: "#003087" }}>
+                  {data.title}
+                </h2>
+
+                <div className="flex flex-col gap-3">
+                  {data.items.map((item, i) => {
+                    const isOpen = openIndex === i;
+                    return (
+                      <div key={i}>
+                        <button
+                          onClick={() => setOpenIndex(isOpen ? null : i)}
+                          className="w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors"
+                          style={{
+                            border: "1.5px solid #D4E6F7",
+                            borderRadius: isOpen ? "20px 20px 0 0" : "9999px",
+                            backgroundColor: isOpen ? "#DDEAF6" : "white",
+                          }}
+                        >
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: "#003087" }}
+                          >
+                            {item.q}
+                          </span>
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke={isOpen ? "#003087" : "#6b7280"}
+                            strokeWidth="2"
+                            style={{
+                              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                              transition: "transform 0.2s",
+                              flexShrink: 0,
+                              marginLeft: "12px",
+                            }}
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        </button>
+
+                        {isOpen && (
+                          <div
+                            className="px-5 py-4 text-sm text-gray-700 whitespace-pre-line"
+                            style={{
+                              border: "1.5px solid #D4E6F7",
+                              borderTop: "none",
+                              borderRadius: "0 0 20px 20px",
+                              backgroundColor: "white",
+                            }}
+                          >
+                            {item.a}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </main>
+          </div>
+
+          {/* Panel kategori FAQ kanan */}
           <aside
-            className="w-56 bg-white shrink-0 p-4"
+            className="w-52 bg-white shrink-0 p-4"
             style={{ border: "1px solid #D4E6F7", borderRadius: "4px" }}
           >
-            <h3 className="font-bold text-gray-800 text-lg mb-4">FAQ</h3>
+            <h3 className="font-bold text-lg mb-4" style={{ color: "#003087" }}>FAQ</h3>
             <div className="flex flex-col gap-3">
               {faqCategories.map((cat) => {
                 const isActive = category === cat.key;
@@ -281,12 +363,15 @@ export default function FAQCategoryPage() {
                     className="flex items-center gap-3 p-3 transition-all text-left w-full"
                     style={{
                       border: "1px solid #D4E6F7",
-                      borderRadius: "4px",
+                      borderRadius: "8px",
                       backgroundColor: isActive ? "#DDEAF6" : "white",
                     }}
                   >
                     <img src={cat.img} alt={cat.label} className="w-10 h-10 object-contain" />
-                    <span className="text-sm font-medium" style={{ color: isActive ? "#003087" : "#374151" }}>
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: "#003087" }}
+                    >
                       {cat.label}
                     </span>
                   </button>
@@ -294,6 +379,7 @@ export default function FAQCategoryPage() {
               })}
             </div>
           </aside>
+
         </div>
       </div>
     </AuthGuard>
