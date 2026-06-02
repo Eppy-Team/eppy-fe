@@ -68,15 +68,19 @@ export default function FaqSidebar({ activeConversationId = null, onSelectConver
     }, [activeConversationId]);
 
     const handleSelectConversation = async (conv: Conversation) => {
+        if (!onSelectConversation) {
+            router.push(`/chat?conversationId=${conv.id}`);
+            return;
+        }
         try {
             const res = await getDetailConversation(conv.id);
             const msgs: MessageType[] = (res.data || []).map((m: { role: string; content: string }) => ({
                 type: m.role === "USER" ? "user" : "bot",
                 content: m.content,
             }));
-            onSelectConversation?.(conv.id, msgs);
+            onSelectConversation(conv.id, msgs);
         } catch {
-            onSelectConversation?.(conv.id, []);
+            onSelectConversation(conv.id, []);
         }
     };
 
