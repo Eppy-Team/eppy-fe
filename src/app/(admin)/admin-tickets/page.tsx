@@ -166,7 +166,7 @@ export default function AdminTicketsPage() {
         <AdminSidebar active="/admin-tickets" />
 
         <main className="flex-1 overflow-y-auto p-8">
-          <h1 className="text-2xl font-bold mb-6" style={{ color: "#003087" }}>Dasbor Tiket</h1>
+          <h1 className="text-2xl font-bold mb-6" style={{ color: "#003087" }}>Dashboard Tiket</h1>
 
           {!selectedTicket ? (
             <div className="bg-white rounded-xl p-6 mb-4" style={{ border: "1px solid #D4E6F7" }}>

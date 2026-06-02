@@ -163,6 +163,30 @@ export const deleteKnowledge = async (knowledgeId: string) => {
   return data;
 };
 
+// ⚠️ BARU: Get knowledge by ID (alias untuk getDetailKnowledge)
+export const getKnowledgeById = async (knowledgeId: string) => {
+  return getDetailKnowledge(knowledgeId);
+};
+
+// ⚠️ BARU: Update knowledge
+export const updateKnowledge = async (knowledgeId: string, title: string, category: string, file?: File | null) => {
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("category", category);
+  if (file) formData.append("file", file);
+
+  const res = await fetch(`${BASE_URL}/knowledge/${knowledgeId}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || "Gagal update knowledge");
+  return data;
+};
+
 // ==================== TICKET (USER) ====================
 export const createTicket = async (
   title: string,

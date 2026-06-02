@@ -97,6 +97,13 @@ export default function AdminSidebar({ active }: Props) {
                         {userName || "Admin"}
                     </span>
                 </button>
+                <button
+                    onClick={() => router.push("/chat")}
+                    className="mt-3 w-full px-3 py-2 text-sm font-semibold text-white rounded-lg hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: "#003087" }}
+                >
+                    Buka User
+                </button>
 
                 {/* Popup profil */}
                 {showProfile && (
@@ -107,7 +114,7 @@ export default function AdminSidebar({ active }: Props) {
                             style={{
                                 backgroundColor: "#DDEAF6",
                                 borderRadius: "12px",
-                                border: "2px solid #003087",
+                                border: "1px solid #003087",
                                 boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                             }}
                         >
@@ -118,8 +125,8 @@ export default function AdminSidebar({ active }: Props) {
                             <div className="flex gap-2 w-full">
                                 <button
                                     onClick={() => { setShowProfile(false); router.push("/forgot-password"); }}
-                                    className="flex-1 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity whitespace-nowrap"
-                                    style={{ backgroundColor: "#0070C0", borderRadius: "8px" }}
+                                    className="flex-1 px-4 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity whitespace-nowrap flex justify-center items-center text-center leading-tight"
+                                    style={{ backgroundColor: "#0070C0", borderRadius: "8px", border: "none" }}
                                 >
                                     Ubah Kata Sandi
                                 </button>
@@ -132,8 +139,8 @@ export default function AdminSidebar({ active }: Props) {
                                         setShowProfile(false);
                                         router.push("/login");
                                     }}
-                                    className="flex-1 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity"
-                                    style={{ backgroundColor: "#0070C0", borderRadius: "8px" }}
+                                    className="flex-1 px-4 py-2 text-xs font-medium text-white hover:opacity-90 transition-opacity flex justify-center items-center text-center leading-tight"
+                                    style={{ backgroundColor: "#0070C0", borderRadius: "8px", border: "none" }}
                                 >
                                     Keluar
                                 </button>
