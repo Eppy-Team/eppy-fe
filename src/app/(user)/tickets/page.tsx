@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
-import { getDetailTicket } from "@/lib/api";
+import { getAllTickets, getDetailTicket } from "@/lib/api";
 
 const faqCategories = [
   { label: "Printer", key: "printer", img: "/images/printer.png" },
@@ -46,7 +46,20 @@ export default function TicketsPage() {
     setError("");
     setTicket(null);
     try {
-      const res = await getDetailTicket(ticketId.trim());
+      // Bersihkan # di depan jika ada
+      const cleanId = ticketId.trim().replace(/^#/, "");
+
+      // Coba cari by UUID penuh dulu
+      const allRes = await getAllTickets(1, 100);
+      const allTickets = allRes.data || [];
+      const found = allTickets.find((t: any) =>
+        t.id.toLowerCase().includes(cleanId.toLowerCase())
+      );
+
+      if (!found) throw new Error("Tidak ditemukan");
+
+      // Ambil detail tiket
+      const res = await getDetailTicket(found.id);
       setTicket(res.data);
     } catch {
       setError("Tiket tidak ditemukan. Pastikan No. Tiket yang kamu masukkan benar.");
@@ -77,7 +90,7 @@ export default function TicketsPage() {
                       </label>
                       <input
                         type="email"
-                        placeholder="Masukkan nama lengkap Anda"
+                        placeholder="Masukkan email Anda"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="w-full px-4 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none"
@@ -91,7 +104,7 @@ export default function TicketsPage() {
                       </label>
                       <input
                         type="text"
-                        placeholder="Masukkan nama lengkap Anda"
+                        placeholder="Masukkan No. Tiket Anda"
                         value={ticketId}
                         onChange={(e) => setTicketId(e.target.value)}
                         required
