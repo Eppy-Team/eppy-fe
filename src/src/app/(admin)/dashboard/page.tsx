@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getDashboardChatbot, exportReport } from "@/lib/api";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 import AuthGuard from "@/components/AuthGuard";
+import RoleGuard from "@/components/RoleGuard";
 
 const CustomDropdown = ({ value, options, onChange }: { value: string; options: string[]; onChange: (v: string) => void }) => {
   const [open, setOpen] = useState(false);
@@ -268,6 +269,7 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard>
+        <RoleGuard allowedRoles={["ADMIN"]}>
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         <AdminSidebar active="/dashboard" />
 
@@ -428,6 +430,7 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
-    </AuthGuard>
+    </RoleGuard>
+      </AuthGuard>
   );
 }
