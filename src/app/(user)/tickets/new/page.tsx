@@ -6,8 +6,6 @@ import AuthNavbar from "@/components/layout/AuthNavbar";
 import AuthGuard from "@/components/AuthGuard";
 import { createTicket } from "@/lib/api";
 
-const productOptions = ["Printer", "Scanner", "Proyektor"];
-
 function NewTicketForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -16,25 +14,23 @@ function NewTicketForm() {
     const messageId = searchParams.get("messageId") || "";
     const prefillDesc = searchParams.get("desc") || "";
 
-    const [product, setProduct] = useState("");
     const [description, setDescription] = useState(prefillDesc);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [openDropdown, setOpenDropdown] = useState(false);
 
     useEffect(() => {
         if (prefillDesc) setDescription(prefillDesc);
     }, [prefillDesc]);
 
     const handleSubmit = async () => {
-        if (!product || !description.trim()) {
-            setError("Produk dan deskripsi wajib diisi.");
+        if (!description.trim()) {
+            setError("Deskripsi wajib diisi.");
             return;
         }
         setError("");
         setLoading(true);
         try {
-            const title = `[${product}] ${description.slice(0, 60)}`;
+            const title = description.slice(0, 60);
             const res = await createTicket(title, description, conversationId, messageId);
             const newTicketId = res.data?.id;
             router.push(`/tickets/${newTicketId}`);
@@ -46,7 +42,7 @@ function NewTicketForm() {
     };
 
     return (
-        <AuthGuard>
+        <AuthGuard requiredRole="USER">
             <div className="flex flex-col min-h-screen" style={{ backgroundColor: "#EEF3FA" }}>
                 <AuthNavbar />
 
@@ -57,48 +53,8 @@ function NewTicketForm() {
                         <h1 className="text-3xl font-bold mb-1" style={{ color: "#003087" }}>Buat Tiket Baru</h1>
                         <p className="text-sm text-gray-500 mb-8">Silakan isi formulir di bawah ini untuk membuat tiket baru.</p>
 
-                        {/* Produk */}
-                        <div className="mb-5">
-                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                                Produk <span className="text-red-500">*</span>
-                            </label>
-                            <div className="relative">
-                                <button
-                                    onClick={() => setOpenDropdown((v) => !v)}
-                                    className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-left"
-                                    style={{
-                                        border: "1px solid #D4E6F7",
-                                        borderRadius: "8px",
-                                        color: product ? "#1a1a2e" : "#9CA3AF",
-                                        backgroundColor: "white",
-                                    }}
-                                >
-                                    {product || "Produk"}
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
-                                        <polyline points="6 9 12 15 18 9" />
-                                    </svg>
-                                </button>
-                                {openDropdown && (
-                                    <>
-                                        <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(false)} />
-                                        <div className="absolute top-full mt-1 w-full bg-white z-20 overflow-hidden"
-                                            style={{ border: "1px solid #D4E6F7", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
-                                            {productOptions.map((opt) => (
-                                                <button key={opt}
-                                                    onClick={() => { setProduct(opt); setOpenDropdown(false); }}
-                                                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-blue-50 transition-colors"
-                                                    style={{ color: product === opt ? "#003087" : "#374151", fontWeight: product === opt ? "600" : "400" }}>
-                                                    {opt}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
                         {/* Deskripsi */}
-                        <div className="mb-5">
+                        <div className="mb-6">
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                                 Deskripsi Pertanyaan <span className="text-red-500">*</span>
                             </label>
@@ -106,7 +62,7 @@ function NewTicketForm() {
                                 placeholder="Masukkan deskripsi kegiatan Anda..."
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
-                                rows={4}
+                                rows={6}
                                 className="w-full px-4 py-2.5 text-sm placeholder:text-gray-400 focus:outline-none resize-none"
                                 style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}
                             />
@@ -118,7 +74,7 @@ function NewTicketForm() {
                         <div className="flex justify-center">
                             <button
                                 onClick={handleSubmit}
-                                disabled={loading || !product || !description.trim()}
+                                disabled={loading || !description.trim()}
                                 className="px-16 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity disabled:opacity-50"
                                 style={{ backgroundColor: "#0070C0", borderRadius: "8px" }}
                             >
