@@ -1,215 +1,161 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { getAllConversations, getDetailConversation } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import ChatSidebar from "@/components/layout/ChatSidebar";
+import AuthGuard from "@/components/AuthGuard";
+import { getDetailTicket } from "@/lib/api";
 
-type MessageType =
-    | { type: "user"; content: string }
-    | { type: "bot"; content: string; messageId?: string; feedbackGiven?: "HELPFUL" | "NOT_HELPFUL" | null }
-    | { type: "escalation" }
-    | { type: "escalation-confirmed" };
+const faqCategories = [
+    { label: "Printer", key: "printer", img: "/images/printer.png" },
+    { label: "Dukungan Pemindai", key: "scanner", img: "/images/scanner.png" },
+    { label: "Proyektor", key: "projector", img: "/images/proyektor.png" },
+];
 
-type Conversation = {
+type Ticket = {
     id: string;
     title: string;
+    description: string;
+    status: string;
+    adminResponse: string | null;
     createdAt: string;
 };
 
-type Props = {
-    activeConversationId?: string | null;
-    onSelectConversation?: (id: string, msgs: MessageType[]) => void;
-    onNewChat?: () => void;
+const getStatusStyle = (status: string) => {
+    switch (status) {
+        case "OPEN": return { bg: "#dcfce7", color: "#16a34a", label: "Baru" };
+        case "ON_PROGRESS": return { bg: "#fef9c3", color: "#ca8a04", label: "Proses" };
+        case "RESOLVED": return { bg: "#dbeafe", color: "#1d4ed8", label: "Selesai" };
+        case "CLOSED": return { bg: "#f3f4f6", color: "#6b7280", label: "Ditutup" };
+        default: return { bg: "#f3f4f6", color: "#6b7280", label: status };
+    }
 };
 
-const menuItems = [
-    {
-        label: "Pesan Eppy Baru (AI)",
-        path: "/chat",
-        icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-        ),
-    },
-    {
-        label: "Cari Pesan",
-        path: "/search",
-        icon: (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-        ),
-    },
-    {
-        label: "Cari Tiket",
-        path: "/tickets",
-        icon: (
-            <img src="/images/headset-icon.png" alt="Tiket" className="w-4 h-4 object-contain" />
-        ),
-    },
-];
-
-export default function ChatSidebar({ activeConversationId = null, onSelectConversation, onNewChat }: Props) {
+export default function TicketDetailPage() {
+    const params = useParams();
     const router = useRouter();
-    const pathname = usePathname();
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [userName, setUserName] = useState("");
+    const ticketId = params.ticketId as string;
+
+    const [ticket, setTicket] = useState<Ticket | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        const name = localStorage.getItem("eppy_name");
-        if (name) setUserName(name);
-    }, []);
-
-    useEffect(() => {
-        const fetchConversations = async () => {
+        const fetchTicket = async () => {
             try {
-                const res = await getAllConversations();
-                setConversations(res.data || []);
+                const res = await getDetailTicket(ticketId);
+                setTicket(res.data);
             } catch {
-                // abaikan error
+                setError("Tiket tidak ditemukan.");
+            } finally {
+                setLoading(false);
             }
         };
-        fetchConversations();
-    }, [activeConversationId]);
-
-    const handleSelectConversation = async (conv: Conversation) => {
-        try {
-            const res = await getDetailConversation(conv.id);
-            const msgs: MessageType[] = (res.data || []).map((m: { role: string; content: string }) => ({
-                type: m.role === "USER" ? "user" : "bot",
-                content: m.content,
-            }));
-            onSelectConversation?.(conv.id, msgs);
-        } catch {
-            onSelectConversation?.(conv.id, []);
-        }
-    };
+        fetchTicket();
+    }, [ticketId]);
 
     return (
-        <aside
-            className="w-64 bg-white flex flex-col h-full shrink-0"
-            style={{ borderRight: "1px solid #D4E6F7" }}
-        >
-            {/* Logo */}
-            <div className="px-5 py-5 flex items-center gap-2">
-                <img src="/images/eppy-logo.png" alt="Eppy" className="w-8 h-8 object-contain" />
-                <span className="font-bold text-xl" style={{ color: "#003087" }}>Eppy</span>
-            </div>
+        <AuthGuard>
+            <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
+                <ChatSidebar />
 
-            {/* Menu Utama */}
-            <div className="px-3 flex flex-col gap-1">
-                {menuItems.map((item) => {
-                    const active =
-                        (item.label === "Pesan Eppy Baru (AI)" && pathname === "/chat") ||
-                        (item.label === "Cari Pesan" && pathname === "/search") ||
-                        (item.label === "Cari Tiket" && pathname === "/tickets");
+                <div className="flex flex-1 overflow-hidden p-4 gap-3">
+                    <main className="flex-1 flex flex-col overflow-hidden bg-white"
+                        style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}>
+                        <div className="flex-1 overflow-y-auto p-8">
 
-                    return (
-                        <button
-                            key={item.label}
-                            onClick={() => {
-                                if (item.label === "Pesan Eppy Baru (AI)") {
-                                    if (onNewChat) onNewChat();
-                                    else router.push("/chat");
-                                } else {
-                                    router.push(item.path);
-                                }
-                            }}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors w-full text-left"
-                            style={{
-                                backgroundColor: active ? "#003087" : "transparent",
-                                color: active ? "white" : "#1a1a2e",
-                            }}
-                        >
-                            {item.icon}
-                            {item.label}
-                        </button>
-                    );
-                })}
-            </div>
+                            {loading ? (
+                                <div className="flex justify-center items-center h-full">
+                                    <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin"
+                                        style={{ borderColor: "#003087", borderTopColor: "transparent" }} />
+                                </div>
+                            ) : error ? (
+                                <div className="flex flex-col items-center justify-center h-full gap-4">
+                                    <p className="text-sm text-red-500">{error}</p>
+                                    <button onClick={() => router.push("/tickets")}
+                                        className="text-sm hover:underline" style={{ color: "#003087" }}>
+                                        ← Kembali ke Cari Tiket
+                                    </button>
+                                </div>
+                            ) : ticket ? (
+                                <>
+                                    {/* Header */}
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h2 className="text-3xl font-bold" style={{ color: "#003087" }}>
+                                            #{ticket.id.slice(0, 5).toUpperCase()}
+                                        </h2>
+                                        <span className="text-xs font-medium px-3 py-1 rounded-full"
+                                            style={{
+                                                backgroundColor: getStatusStyle(ticket.status).bg,
+                                                color: getStatusStyle(ticket.status).color,
+                                            }}>
+                                            {getStatusStyle(ticket.status).label}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-500 mb-2">{ticket.title}</p>
+                                    <p className="text-xs text-gray-400 mb-6">
+                                        {new Date(ticket.createdAt).toLocaleDateString("id-ID", {
+                                            day: "numeric", month: "long", year: "numeric",
+                                            hour: "2-digit", minute: "2-digit"
+                                        })}
+                                    </p>
 
-            {/* Divider */}
-            <div className="border-t mx-4 mt-3" style={{ borderColor: "#D4E6F7" }} />
+                                    {/* Percakapan */}
+                                    <div className="flex flex-col gap-4">
+                                        {/* Pertanyaan user */}
+                                        <div className="flex justify-end">
+                                            <div className="px-4 py-2.5 text-sm text-gray-700 max-w-lg"
+                                                style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 2px 12px", backgroundColor: "#EBF4FF" }}>
+                                                {ticket.description}
+                                            </div>
+                                        </div>
 
-            {/* Riwayat */}
-            <div className="px-3 py-3 flex flex-col gap-1 overflow-y-auto flex-1">
-                <div className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-500">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14" />
-                    </svg>
-                    Pesan Anda
-                </div>
-                {conversations.length === 0 ? (
-                    <p className="text-xs text-gray-400 px-3">Belum ada percakapan</p>
-                ) : (
-                    (() => {
-                        const today = new Date();
-                        const yesterday = new Date(today);
-                        yesterday.setDate(yesterday.getDate() - 1);
+                                        {/* Jawaban admin */}
+                                        {ticket.adminResponse ? (
+                                            <div className="flex justify-start">
+                                                <div className="px-4 py-3 text-sm text-gray-700 max-w-lg whitespace-pre-line"
+                                                    style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 12px 2px", backgroundColor: "white" }}>
+                                                    {ticket.adminResponse}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex justify-start">
+                                                <div className="px-4 py-3 text-sm text-gray-400 italic"
+                                                    style={{ border: "1px solid #D4E6F7", borderRadius: "12px 12px 12px 2px", backgroundColor: "white" }}>
+                                                    Menunggu respons dari tim support...
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
 
-                        const groups: Record<string, Conversation[]> = {};
-                        conversations.forEach((conv) => {
-                            const date = new Date(conv.createdAt);
-                            const isToday = date.toDateString() === today.toDateString();
-                            const isYesterday = date.toDateString() === yesterday.toDateString();
-                            const key = isToday
-                                ? "Hari Ini"
-                                : isYesterday
-                                    ? "Kemarin"
-                                    : date.toLocaleDateString("id-ID", { day: "numeric", month: "long" });
-                            if (!groups[key]) groups[key] = [];
-                            groups[key].push(conv);
-                        });
+                                    <button
+                                        onClick={() => router.push("/tickets")}
+                                        className="mt-8 text-sm hover:underline"
+                                        style={{ color: "#003087" }}>
+                                        ← Cari tiket lain
+                                    </button>
+                                </>
+                            ) : null}
+                        </div>
+                    </main>
 
-                        return Object.entries(groups).map(([group, convs]) => (
-                            <div key={group}>
-                                <p className="text-xs font-semibold text-gray-400 px-3 py-1 mt-2 uppercase tracking-wide">
-                                    {group}
-                                </p>
-                                {convs.map((conv) => {
-                                    const isActive = activeConversationId === conv.id;
-                                    return (
-                                        <button
-                                            key={conv.id}
-                                            onClick={() => handleSelectConversation(conv)}
-                                            className="w-full text-left px-3 py-2 rounded-lg transition-colors hover:bg-blue-50"
-                                            style={{ backgroundColor: isActive ? "#DDEAF6" : "transparent" }}
-                                        >
-                                            <p
-                                                className="text-sm truncate"
-                                                style={{ color: isActive ? "#003087" : "#374151", fontWeight: isActive ? 600 : 400 }}
-                                            >
-                                                {conv.title || "Percakapan"}
-                                            </p>
-                                            <p className="text-xs text-gray-400 mt-0.5">
-                                                {new Date(conv.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}
-                                            </p>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        ));
-                    })()
-                )}
-            </div>
-
-            {/* User di bawah */}
-            <div className="px-4 py-4 border-t" style={{ borderColor: "#D4E6F7" }}>
-                <div className="flex items-center gap-3">
-                    <div
-                        className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
-                        style={{ backgroundColor: "#003087" }}
-                    >
-                        {userName ? userName[0].toUpperCase() : "U"}
-                    </div>
-                    <span className="text-sm font-semibold truncate" style={{ color: "#003087" }}>
-                        {userName || "Pengguna"}
-                    </span>
+                    {/* FAQ kanan */}
+                    <aside className="w-56 bg-white shrink-0 p-4"
+                        style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}>
+                        <h3 className="font-bold text-lg mb-4" style={{ color: "#003087" }}>FAQ</h3>
+                        <div className="flex flex-col gap-3">
+                            {faqCategories.map((cat, i) => (
+                                <button key={i} onClick={() => router.push(`/faq/${cat.key}`)}
+                                    className="flex items-center gap-3 p-3 hover:bg-blue-50 transition-all text-left w-full"
+                                    style={{ border: "1px solid #D4E6F7", borderRadius: "8px" }}>
+                                    <img src={cat.img} alt={cat.label} className="w-10 h-10 object-contain" />
+                                    <span className="text-sm font-medium" style={{ color: "#003087" }}>{cat.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </aside>
                 </div>
             </div>
-        </aside>
+        </AuthGuard>
     );
 }

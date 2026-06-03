@@ -37,31 +37,102 @@ const CustomDropdown = ({ value, options, onChange }: { value: string; options: 
   );
 };
 
-const PieChart = ({ data }: { data: { label: string; value: number; color: string }[] }) => {
+const PieChart = ({ data, onSliceClick }: {
+  data: { label: string; value: number; color: string }[];
+  onSliceClick?: (label: string) => void;
+}) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number } | null>(null);
+
   const total = data.reduce((sum, d) => sum + d.value, 0);
-  if (total === 0) return <div className="w-[180px] h-[180px] rounded-full bg-gray-100" />;
+  if (total === 0) return <div className="w-[180px] h-[180px] rounded-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">Tidak ada data</div>;
+
   let cumulative = 0;
   const slices = data.map((d) => {
     const startAngle = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
     cumulative += d.value;
     const endAngle = (cumulative / total) * 2 * Math.PI - Math.PI / 2;
-    const x1 = 100 + 90 * Math.cos(startAngle);
-    const y1 = 100 + 90 * Math.sin(startAngle);
-    const x2 = 100 + 90 * Math.cos(endAngle);
-    const y2 = 100 + 90 * Math.sin(endAngle);
+    const r = 90;
+    const x1 = 100 + r * Math.cos(startAngle);
+    const y1 = 100 + r * Math.sin(startAngle);
+    const x2 = 100 + r * Math.cos(endAngle);
+    const y2 = 100 + r * Math.sin(endAngle);
     const largeArc = d.value / total > 0.5 ? 1 : 0;
-    return { ...d, path: `M 100 100 L ${x1} ${y1} A 90 90 0 ${largeArc} 1 ${x2} ${y2} Z` };
+    const midAngle = startAngle + (endAngle - startAngle) / 2;
+    return {
+      ...d,
+      path: `M 100 100 L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`,
+      midAngle,
+      percent: ((d.value / total) * 100).toFixed(1),
+    };
   });
+
   return (
-    <svg width="180" height="180" viewBox="0 0 200 200">
-      {slices.map((s, i) => <path key={i} d={s.path} fill={s.color} />)}
-    </svg>
+    <div className="relative">
+      <svg
+        width="180" height="180" viewBox="0 0 200 200"
+        style={{ cursor: "pointer" }}
+      >
+        {slices.map((s, i) => {
+          const isHovered = hoveredIndex === i;
+          const offset = isHovered ? 8 : 0;
+          const tx = offset * Math.cos(s.midAngle);
+          const ty = offset * Math.sin(s.midAngle);
+          return (
+            <path
+              key={i}
+              d={s.path}
+              fill={s.color}
+              transform={`translate(${tx}, ${ty})`}
+              style={{
+                transition: "transform 0.2s ease",
+                filter: isHovered ? "brightness(1.1)" : "none",
+              }}
+              onMouseEnter={(e) => {
+                setHoveredIndex(i);
+                const rect = (e.currentTarget.closest("svg") as SVGElement).getBoundingClientRect();
+                setTooltip({
+                  x: e.clientX - rect.left,
+                  y: e.clientY - rect.top,
+                });
+              }}
+              onMouseMove={(e) => {
+                const rect = (e.currentTarget.closest("svg") as SVGElement).getBoundingClientRect();
+                setTooltip({
+                  x: e.clientX - rect.left,
+                  y: e.clientY - rect.top,
+                });
+              }}
+              onMouseLeave={() => { setHoveredIndex(null); setTooltip(null); }}
+              onClick={() => onSliceClick?.(s.label)}
+            />
+          );
+        })}
+      </svg>
+
+      {/* Tooltip */}
+      {hoveredIndex !== null && tooltip && (
+        <div
+          className="absolute z-30 pointer-events-none px-3 py-2 text-xs text-white rounded-lg shadow-lg"
+          style={{
+            backgroundColor: "#003087",
+            left: tooltip.x + 12,
+            top: tooltip.y - 36,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <p className="font-semibold">{slices[hoveredIndex].label}</p>
+          <p>{slices[hoveredIndex].value} percakapan ({slices[hoveredIndex].percent}%)</p>
+        </div>
+      )}
+    </div>
   );
 };
 
-const statusConfig: Record<string, { bg: string; color: string; dot: string }> = {
-  "Puas": { bg: "#f0fdf4", color: "#16a34a", dot: "#22c55e" },
-  "Tidak Puas": { bg: "#fff1f2", color: "#e11d48", dot: "#f43f5e" },
+const statusConfig: Record<string, { bg: string; color: string; dot: string; label: string }> = {
+  "HELPFUL": { bg: "#f0fdf4", color: "#16a34a", dot: "#22c55e", label: "Puas" },
+  "NOT_HELPFUL": { bg: "#fff1f2", color: "#e11d48", dot: "#f43f5e", label: "Tidak Puas" },
+  "null": { bg: "#f3f4f6", color: "#6b7280", dot: "#9ca3af", label: "Belum dinilai" },
 };
 
 const statusApiMap: Record<string, string | undefined> = {
@@ -70,28 +141,14 @@ const statusApiMap: Record<string, string | undefined> = {
   "Tidak Puas": "NOT_HELPFUL",
 };
 
-const statusApiToLabel: Record<string, string> = {
-  "HELPFUL": "Puas",
-  "NOT_HELPFUL": "Tidak Puas",
-  "helpful": "Puas",
-  "notHelpful": "Tidak Puas",
-};
-
 const getPeriodeDates = (periode: string) => {
   const today = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const todayStr = toStr(today);
   if (periode === "Hari Ini") return { startDate: todayStr, endDate: todayStr };
-  if (periode === "Minggu Ini") {
-    const start = new Date(today);
-    start.setDate(today.getDate() - 7);
-    return { startDate: toStr(start), endDate: todayStr };
-  }
-  if (periode === "Bulan Ini") {
-    const start = new Date(today.getFullYear(), today.getMonth(), 1);
-    return { startDate: toStr(start), endDate: todayStr };
-  }
+  if (periode === "Minggu Ini") { const s = new Date(today); s.setDate(today.getDate() - 7); return { startDate: toStr(s), endDate: todayStr }; }
+  if (periode === "Bulan Ini") { const s = new Date(today.getFullYear(), today.getMonth(), 1); return { startDate: toStr(s), endDate: todayStr }; }
   return { startDate: undefined, endDate: undefined };
 };
 
@@ -99,10 +156,8 @@ type ConversationRow = {
   id: string;
   userName: string;
   userEmail: string;
-  status: string;
+  lastFeedback: string | null;
   createdAt: string;
-  conversationId?: string;
-  rawDate?: string;
 };
 
 export default function DashboardPage() {
@@ -125,31 +180,22 @@ export default function DashboardPage() {
       const { startDate, endDate } = getPeriodeDates(periode);
       const res = await getDashboardChatbot(currentPage, perPage, apiStatus, startDate, endDate);
       const data = res.data;
-      const rawList = data?.conversations || data?.data || [];
+      const meta = res.meta;
+      const rawList = data?.conversations || [];
 
-      const currentStatusLabel =
-        apiStatus === "HELPFUL" ? "Puas" :
-          apiStatus === "NOT_HELPFUL" ? "Tidak Puas" : "Puas";
-
-      let mapped: ConversationRow[] = rawList.map((item: any) => ({
+      const mapped: ConversationRow[] = rawList.map((item: any) => ({
         id: item.id,
         userName: item.user?.name || "-",
         userEmail: item.user?.email || "-",
-        status: currentStatusLabel,
+        lastFeedback: item.lastFeedback ?? "null",
         createdAt: item.createdAt
           ? new Date(item.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
           : "-",
-        conversationId: item.id,
-        rawDate: item.createdAt ? item.createdAt.split("T")[0] : "",
       }));
 
-      if (startDate && endDate) {
-        mapped = mapped.filter((item: any) => item.rawDate >= startDate && item.rawDate <= endDate);
-      }
-
       setRows(mapped);
-      setTotalData(mapped.length);
-      setTotalPages(Math.ceil(mapped.length / perPage) || 1);
+      setTotalData(meta?.total || 0);
+      setTotalPages(meta?.totalPages || 1);
 
       if (data?.satisfactionChart) {
         setPieData({
@@ -210,7 +256,14 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-              <PieChart data={pieKepuasan} />
+              <PieChart
+                data={pieKepuasan}
+                onSliceClick={(label) => {
+                  const map: Record<string, string> = { "Puas": "Puas", "Tidak puas": "Tidak Puas" };
+                  const val = map[label];
+                  if (val) { setStatusFilter(val); setPage(1); }
+                }}
+              />
             </div>
 
             {/* Filter */}
@@ -257,7 +310,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 rows.map((row) => {
-                  const s = statusConfig[row.status] ?? statusConfig["Puas"];
+                  const s = statusConfig[row.lastFeedback ?? "null"] ?? statusConfig["null"];
                   return (
                     <div key={row.id}
                       className="grid grid-cols-4 px-6 py-3 items-center hover:bg-blue-50 transition-colors"
@@ -277,7 +330,7 @@ export default function DashboardPage() {
                         <span className="flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full"
                           style={{ backgroundColor: s.bg, color: s.color, border: `1px solid ${s.dot}` }}>
                           <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: s.dot }} />
-                          {row.status}
+                          {s.label}
                         </span>
                       </div>
 
@@ -287,7 +340,7 @@ export default function DashboardPage() {
 
                       <div className="flex justify-center">
                         <button
-                          onClick={() => router.push(`/dashboard/conversation/${row.conversationId}`)}
+                          onClick={() => router.push(`/dashboard/conversation/${row.id}`)}
                           className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white rounded-full hover:opacity-90"
                           style={{ backgroundColor: "#003087" }}>
                           Lihat Chatbot
@@ -307,13 +360,24 @@ export default function DashboardPage() {
               <span className="text-sm text-gray-500">
                 Menampilkan {totalData === 0 ? 0 : (page - 1) * perPage + 1}–{Math.min(page * perPage, totalData)} dari {totalData}
               </span>
-              <div className="flex gap-2">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-                  className="px-4 py-1.5 text-sm rounded border transition-colors disabled:opacity-40"
-                  style={{ borderColor: "#D4E6F7" }}>Prev</button>
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages || totalPages === 0}
-                  className="px-4 py-1.5 text-sm rounded border transition-colors disabled:opacity-40"
-                  style={{ borderColor: "#D4E6F7" }}>Next</button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="px-4 py-1.5 text-sm rounded-lg border transition-colors disabled:opacity-40 hover:bg-blue-50"
+                  style={{ borderColor: "#D4E6F7" }}>
+                  Prev
+                </button>
+                <span className="text-sm text-gray-500">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-4 py-1.5 text-sm rounded-lg border transition-colors disabled:opacity-40 hover:bg-blue-50"
+                  style={{ borderColor: "#D4E6F7" }}>
+                  Next
+                </button>
               </div>
             </div>
           </div>

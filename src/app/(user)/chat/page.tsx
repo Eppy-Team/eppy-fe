@@ -150,23 +150,12 @@ function ChatPageInner() {
       { type: "user", content: "✅ Ya, Buatkan Saya Tiket Baru" },
       { type: "escalation-confirmed" },
       ]);
-      try {
-        await createTicket(lastUserMessage.slice(0, 100), lastUserMessage, activeConversationId!, lastMessageId!);
-        setMessages((prev) => [...prev, {
-          type: "bot",
-          content: "✅ Tiket berhasil dibuat! Tim kami akan segera menghubungi kamu.",
-          messageId: undefined,
-          feedbackGiven: null,
-        }]);
-        setTimeout(() => router.push("/tickets"), 1500);
-      } catch (err: any) {
-        setMessages((prev) => [...prev, {
-          type: "bot",
-          content: err.message || "Gagal membuat tiket. Silakan coba lagi.",
-          messageId: undefined,
-          feedbackGiven: null,
-        }]);
-      }
+      const params = new URLSearchParams({
+        conversationId: activeConversationId || "",
+        messageId: lastMessageId || "",
+        desc: lastUserMessage.slice(0, 200),
+      });
+      setTimeout(() => router.push(`/tickets/new?${params}`), 800);
     } else {
       setMessages((prev) => [...prev, { type: "user", content: "❌ Tidak" }]);
     }
