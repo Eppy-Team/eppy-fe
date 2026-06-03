@@ -121,7 +121,7 @@ export default function TicketsPage() {
                   {/* Detail tiket */}
                   <div className="flex items-center justify-between mb-1">
                     <h2 className="text-3xl font-bold" style={{ color: "#003087" }}>
-                      #{ticket.id.slice(0, 5).toUpperCase()}
+                      #{ticket.id?.slice(0, 5).toUpperCase()}
                     </h2>
                     <span className="text-xs font-medium px-3 py-1 rounded-full"
                       style={{ backgroundColor: getStatusStyle(ticket.status).bg, color: getStatusStyle(ticket.status).color }}>

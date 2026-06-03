@@ -304,7 +304,7 @@ export default function FAQCategoryPage() {
                         >
                           <span
                             className="text-sm font-medium"
-                            style={{ color: "#003087" }}
+                            style={{ color: "#1a1a2e" }}
                           >
                             {item.q}
                           </span>
@@ -328,13 +328,7 @@ export default function FAQCategoryPage() {
 
                         {isOpen && (
                           <div
-                            className="px-5 py-4 text-sm text-gray-700 whitespace-pre-line"
-                            style={{
-                              border: "1.5px solid #D4E6F7",
-                              borderTop: "none",
-                              borderRadius: "0 0 20px 20px",
-                              backgroundColor: "white",
-                            }}
+                            className="px-5 py-4 text-sm whitespace-pre-line" style={{ color: "#1a1a2e" }}
                           >
                             {item.a}
                           </div>
@@ -370,7 +364,7 @@ export default function FAQCategoryPage() {
                     <img src={cat.img} alt={cat.label} className="w-10 h-10 object-contain" />
                     <span
                       className="text-sm font-medium"
-                      style={{ color: "#003087" }}
+                      style={{ color: "#1a1a2e" }}
                     >
                       {cat.label}
                     </span>

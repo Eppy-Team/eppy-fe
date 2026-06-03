@@ -306,7 +306,7 @@ export default function DashboardPage() {
                 />
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">Status : </span>
+                <span className="text-sm font-medium text-gray-700">Status</span>
                 <CustomDropdown
                   value={statusFilter}
                   options={["Status", "Puas", "Tidak Puas"]}

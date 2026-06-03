@@ -317,7 +317,10 @@ export default function AdminTicketsPage() {
               </button>
 
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl font-bold" style={{ color: "#003087" }}>{selectedTicket.title}</h2>
+                <div>
+                  <h2 className="text-2xl font-bold" style={{ color: "#003087" }}>{selectedTicket.title}</h2>
+                  <p className="text-sm font-medium mt-0.5" style={{ color: "#003087" }}>#{selectedTicket.id.slice(0, 8).toUpperCase()}</p>
+                </div>
                 <div className="flex gap-2">
                   {["OPEN", "ON_PROGRESS", "RESOLVED", "CLOSED"].map((s) => (
                     <button key={s} onClick={() => handleUpdateStatus(selectedTicket.id, s)}
