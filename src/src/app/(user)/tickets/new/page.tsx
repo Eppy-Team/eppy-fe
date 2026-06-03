@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthNavbar from "@/components/layout/AuthNavbar";
 import AuthGuard from "@/components/AuthGuard";
-import RoleGuard from "@/components/RoleGuard";
 import { createTicket } from "@/lib/api";
 
 const productOptions = ["Printer", "Scanner", "Proyektor"];
@@ -47,8 +46,7 @@ function NewTicketForm() {
     };
 
     return (
-        <AuthGuard>
-        <RoleGuard allowedRoles={["USER", "ADMIN"]}>
+        <AuthGuard requiredRole="USER">
             <div className="flex flex-col min-h-screen" style={{ backgroundColor: "#EEF3FA" }}>
                 <AuthNavbar />
 
@@ -130,8 +128,7 @@ function NewTicketForm() {
                     </div>
                 </div>
             </div>
-        </RoleGuard>
-      </AuthGuard>
+    </AuthGuard>
     );
 }
 

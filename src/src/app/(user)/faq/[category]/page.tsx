@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import FaqSidebar from "@/components/layout/FaqSidebar";
 import AuthGuard from "@/components/AuthGuard";
-import RoleGuard from "@/components/RoleGuard";
 
 const faqData: Record<string, { title: string; items: { q: string; a: string }[] }> = {
   printer: {
@@ -204,8 +203,7 @@ export default function FAQCategoryPage() {
   const data = faqData[category] || faqData["printer"];
 
   return (
-    <AuthGuard>
-        <RoleGuard allowedRoles={["USER", "ADMIN"]}>
+    <AuthGuard requiredRole="USER">
       <div className="flex flex-col h-screen" style={{ backgroundColor: 'var(--epson-bg)' }}>
         <div className="flex flex-1 overflow-hidden p-4 gap-3" style={{ backgroundColor: "#F0F7FF" }}>
 
@@ -384,7 +382,6 @@ export default function FAQCategoryPage() {
 
         </div>
       </div>
-    </RoleGuard>
-      </AuthGuard>
+    </AuthGuard>
   );
 }

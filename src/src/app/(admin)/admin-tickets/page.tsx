@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
-import RoleGuard from "@/components/RoleGuard";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 import { getAllTicketsAdmin, updateTicketStatus, respondTicket } from "@/lib/api";
 import Toast from "@/components/ui/Toast";
@@ -170,8 +169,7 @@ export default function AdminTicketsPage() {
   };
 
   return (
-    <AuthGuard>
-        <RoleGuard allowedRoles={["ADMIN"]}>
+    <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         <AdminSidebar active="/admin-tickets" />
 
@@ -384,7 +382,6 @@ export default function AdminTicketsPage() {
         </main>
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-    </RoleGuard>
-      </AuthGuard>
+    </AuthGuard>
   );
 }

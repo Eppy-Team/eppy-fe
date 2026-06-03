@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
-import RoleGuard from "@/components/RoleGuard";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 import { getAllKnowledges, createKnowledge, deleteKnowledge } from "@/lib/api";
 import Toast from "@/components/ui/Toast";
@@ -84,8 +83,7 @@ export default function KnowledgeBasePage() {
   }, []);
 
   return (
-    <AuthGuard>
-        <RoleGuard allowedRoles={["ADMIN"]}>
+    <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         <AdminSidebar active="/knowledge-base" />
         <main className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: "#F0F7FF" }}>
@@ -332,7 +330,6 @@ export default function KnowledgeBasePage() {
         )}
       </div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={hideToast} />}
-    </RoleGuard>
-      </AuthGuard>
+    </AuthGuard>
   );
 }

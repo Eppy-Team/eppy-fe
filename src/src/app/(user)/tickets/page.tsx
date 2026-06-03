@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
-import RoleGuard from "@/components/RoleGuard";
 import { getDetailTicket } from "@/lib/api";
 
 const faqCategories = [
@@ -57,8 +56,7 @@ export default function TicketsPage() {
   };
 
   return (
-    <AuthGuard>
-        <RoleGuard allowedRoles={["USER", "ADMIN"]}>
+    <AuthGuard requiredRole="USER">
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         <ChatSidebar />
 
@@ -190,7 +188,6 @@ export default function TicketsPage() {
           </aside>
         </div>
       </div>
-    </RoleGuard>
-      </AuthGuard>
+    </AuthGuard>
   );
 }

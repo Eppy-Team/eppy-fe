@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import AuthGuard from "@/components/AuthGuard";
-import RoleGuard from "@/components/RoleGuard";
 import { getDetailConversation } from "@/lib/api";
 
 type Message = {
@@ -42,8 +41,7 @@ export default function ChatDetailPage() {
     }, [messages]);
 
     return (
-        <AuthGuard>
-        <RoleGuard allowedRoles={["USER", "ADMIN"]}>
+        <AuthGuard requiredRole="USER">
             <div className="flex flex-col h-screen" style={{ backgroundColor: "#DDEAF6" }}>
                 <Navbar />
                 <div className="flex-1 flex flex-col overflow-hidden p-4">
@@ -97,7 +95,6 @@ export default function ChatDetailPage() {
                     </div>
                 </div>
             </div>
-        </RoleGuard>
-      </AuthGuard>
+    </AuthGuard>
     );
 }

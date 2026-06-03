@@ -169,7 +169,7 @@ export default function AdminTicketsPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         <AdminSidebar active="/admin-tickets" />
 

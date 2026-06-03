@@ -267,7 +267,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         <AdminSidebar active="/dashboard" />
 

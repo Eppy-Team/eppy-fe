@@ -83,7 +83,7 @@ export default function KnowledgeBasePage() {
   }, []);
 
   return (
-    <AuthGuard>
+    <AuthGuard requiredRole="ADMIN">
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         <AdminSidebar active="/knowledge-base" />
         <main className="flex-1 overflow-y-auto p-6" style={{ backgroundColor: "#F0F7FF" }}>

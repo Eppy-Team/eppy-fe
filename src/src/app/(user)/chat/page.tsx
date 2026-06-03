@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import ChatSidebar from "@/components/layout/ChatSidebar";
 import AuthGuard from "@/components/AuthGuard";
-import RoleGuard from "@/components/RoleGuard";
 import { createConversation, sendChat, createTicket, sendFeedback, getDetailConversation } from "@/lib/api";
 import ReactMarkdown from "react-markdown";
 
@@ -163,8 +162,7 @@ function ChatPageInner() {
   };
 
   return (
-    <AuthGuard>
-        <RoleGuard allowedRoles={["USER", "ADMIN"]}>
+    <AuthGuard requiredRole="USER">
       <div className="flex h-screen overflow-hidden" style={{ backgroundColor: "#F0F7FF" }}>
         {/* Sidebar */}
         <ChatSidebar
@@ -413,8 +411,7 @@ function ChatPageInner() {
           </div>
         </div>
       )}
-    </RoleGuard>
-      </AuthGuard>
+    </AuthGuard>
   );
 }
 

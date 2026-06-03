@@ -9,33 +9,34 @@ type Props = {
     allowedRoles: string[];
 };
 
-/**
- * RoleGuard - Proteksi halaman berdasarkan role pengguna.
- *
- * Aturan:
- * - User (role: "USER") hanya bisa akses halaman user
- * - Admin (role: "ADMIN") bisa akses halaman admin DAN halaman user (fitur "Buka User")
- *
- * Penggunaan:
- * - Halaman admin: <RoleGuard allowedRoles={["ADMIN"]}>
- * - Halaman user:  <RoleGuard allowedRoles={["USER", "ADMIN"]}>
- */
 export default function RoleGuard({ children, allowedRoles }: Props) {
     const router = useRouter();
-    const [checking, setChecking] = useState(true);
+    const [allowed, setAllowed] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("eppy_token");
         const role = localStorage.getItem("eppy_role");
 
+        console.log("[RoleGuard] token:", token ? "ada" : "kosong");
+        console.log("[RoleGuard] role:", role);
+        console.log("[RoleGuard] allowedRoles:", allowedRoles);
+
         if (!token) {
+            console.log("[RoleGuard] → redirect /login (no token)");
             router.replace("/login");
             return;
         }
 
-        if (!role || !allowedRoles.includes(role)) {
-            // User mencoba akses admin → redirect ke /chat
-            // Admin tidak akan kena ini karena allowedRoles user selalu include ADMIN
+        if (!role) {
+            // role kosong → kemungkinan login lama sebelum role disimpan, paksa re-login
+            console.log("[RoleGuard] → redirect /login (no role)");
+            localStorage.clear();
+            router.replace("/login");
+            return;
+        }
+
+        if (!allowedRoles.includes(role)) {
+            console.log("[RoleGuard] → role tidak diizinkan, redirect");
             if (role === "ADMIN") {
                 router.replace("/dashboard");
             } else {
@@ -44,10 +45,11 @@ export default function RoleGuard({ children, allowedRoles }: Props) {
             return;
         }
 
-        setChecking(false);
-    }, [router]);
+        console.log("[RoleGuard] → akses diizinkan");
+        setAllowed(true);
+    }, []);
 
-    if (checking) return <PageLoader />;
+    if (!allowed) return <PageLoader />;
 
     return <>{children}</>;
 }

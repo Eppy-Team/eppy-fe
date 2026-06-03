@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { getDetailConversation } from "@/lib/api";
-import RoleGuard from "@/components/RoleGuard";
 
 export default function AdminConversationPage() {
     const params = useParams();
